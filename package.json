@@ -3,9 +3,10 @@
     "version": "0.1.0",
     "description": "Depend resolve packing",
     "scripts": {
-        "build": "set NODE_ENV=production && tsc -p ./tsconfig.json && rollup -c rollup.config.js"
+        "build": "set NODE_ENV=production && tsc -p ./tsconfig.json && rollup -c rollup.config.js",
+        "pack": "tsc -p ./tsconfig.json && rollup -c ./script/rollup.config.js"
     },
-    "author": "chaoquny@cn.ibm.com",
+    "author": "chalk2017",
     "license": "",
     "dependencies": {
         "@rollup/plugin-node-resolve": "^13.1.3",
