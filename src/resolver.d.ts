@@ -10,18 +10,18 @@ export interface DefineTables {
     declareTables: (sequelize: Sequelize, cacheTabs: Array<any>, transition?: Transaction) => Record<keyof TablesStructure, ModelCtor<Model<any, any>>>;
 }
 // 装饰器
-interface Option {
+interface Option<T> {
     useOrm?: boolean,
     autoClose?: boolean,
     useTransaction?: boolean,
-    tables?: Array<TablesStructure>
+    tables?: Array<keyof T>
 }
-export class defineTables {
+export class defineTables<T> {
     constructor(tablesStructure, relation);
     // 定义表
     declareTables(sequelize: Sequelize, cacheTabs: Array<any>, transition?: Transaction): Record<keyof TablesStructure, ModelCtor<Model<any, any>>>;
     // 装饰器
-    Sqlite(option?: Option): (target: any, propertyKey: string, props: PropertyDescriptor) => PropertyDescriptor;
+    Sqlite(option?: Option<T>): (target: any, propertyKey: string, props: PropertyDescriptor) => PropertyDescriptor;
 }
 // restful请求装饰器
 export function Get(url): (target: any, propertyKey: string, props: PropertyDescriptor) => PropertyDescriptor;

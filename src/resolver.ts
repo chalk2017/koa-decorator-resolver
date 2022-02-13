@@ -24,7 +24,7 @@ interface Option {
     useOrm?: boolean,
     autoClose?: boolean,
     useTransaction?: boolean,
-    tables?: Array<TablesStructure>
+    tables?: Array<string>
 }
 export class defineTables implements DefineTables {
     tablesStructure?: TablesStructure;
@@ -32,7 +32,7 @@ export class defineTables implements DefineTables {
     sequelize?: Sequelize;
     sqlite?: any;
     sqlite3?: any;
-    constructor(tablesStructure, relation, sequelize, sqlite, sqlite3) {
+    constructor(tablesStructure, relation, sequelize?: any, sqlite?: any, sqlite3?: any) {
         this.tablesStructure = tablesStructure;
         this.relation = relation;
         this.sequelize = sequelize;
@@ -42,6 +42,7 @@ export class defineTables implements DefineTables {
 
     // 定义表
     declareTables(sequelize: Sequelize, cacheTabs: Array<any>, transition?: Transaction) {
+        const _this = this;
         const commonOpt = {
             freezeTableName: true,
             timestamps: false
@@ -50,24 +51,24 @@ export class defineTables implements DefineTables {
         if (cacheTabs && cacheTabs.length > 0) {
             // 按需初始化表
             cacheTabs.forEach((tableName: string) => {
-                const model: ModelCtor<Model<any, any>> = (this.tablesStructure as any)[tableName]({ s: sequelize, o: commonOpt, t: tableName })
+                const model: ModelCtor<Model<any, any>> = (_this.tablesStructure as any)[tableName]({ s: sequelize, o: commonOpt, t: tableName })
                 if (transition) {
-                    tables[tableName] = this.useTransaction(model, transition)
+                    tables[tableName] = _this.useTransaction(model, transition)
                 } else {
                     tables[tableName] = model
                 }
             })
         } else {
-            Object.keys(this.tablesStructure).forEach((tableName: string) => {
-                const model: ModelCtor<Model<any, any>> = (this.tablesStructure as any)[tableName]({ s: sequelize, o: commonOpt, t: tableName })
+            Object.keys(_this.tablesStructure).forEach((tableName: string) => {
+                const model: ModelCtor<Model<any, any>> = (_this.tablesStructure as any)[tableName]({ s: sequelize, o: commonOpt, t: tableName })
                 if (transition) {
-                    tables[tableName] = this.useTransaction(model, transition)
+                    tables[tableName] = _this.useTransaction(model, transition)
                 } else {
                     tables[tableName] = model
                 }
             })
         }
-        this.relation(tables);
+        _this.relation(tables);
         return tables as Record<keyof TablesStructure, ModelCtor<Model<any, any>>>;
     }
 
@@ -173,18 +174,19 @@ export class defineTables implements DefineTables {
     }
     // 装饰器
     Sqlite(option?: Option) {
+        const _this = this;
         const decoratorFunc = (target: any, propertyKey: string, { configurable, enumerable, value, writable }: PropertyDescriptor) => {
             const func = async (...args: any) => {
                 const autoClose = option?.autoClose ?? true; // 自动关闭，默认true
                 const useTransaction = option?.useTransaction ?? false; // 是否使用事物，默认false
                 let res!: any;
                 if (option?.useOrm) {
-                    const sequelize = await ormConnectionCreate(this.sequelize)();
+                    const sequelize = await ormConnectionCreate(_this.sequelize)();
                     let transaction = null;
                     if (useTransaction) {
                         transaction = await sequelize.transaction();
                     }
-                    const tables = this.declareTables(sequelize as Sequelize, option.tables, transaction);
+                    const tables = _this.declareTables(sequelize as Sequelize, option.tables, transaction);
                     target.db = { sequelize, tables, transaction };
                     try {
                         res = await (value as Function).apply(target, args);
@@ -200,7 +202,7 @@ export class defineTables implements DefineTables {
                         await sequelize.close();
                     }
                 } else {
-                    const conn = await connectionCreate(this.sqlite, this.sqlite3)();
+                    const conn = await connectionCreate(_this.sqlite, _this.sqlite3)();
                     target.db = conn;
                     res = await (value as Function).apply(target, args);
                     if (autoClose) {
@@ -216,7 +218,7 @@ export class defineTables implements DefineTables {
 }
 
 // 创建通用sqlite连接
-export const connectionCreate = (_sqlite, _sqlite3) => async () => {
+export const connectionCreate = (_sqlite?: any, _sqlite3?: any) => async () => {
     try {
         const db: ConnectionType = await sqlite.open({
             // filename: /根目录/db.sqlite.js
@@ -234,7 +236,7 @@ export const connectionCreate = (_sqlite, _sqlite3) => async () => {
 }
 
 // 创建orm通用连接
-export const ormConnectionCreate = (_Sequelize) => async () => {
+export const ormConnectionCreate = (_Sequelize?: any) => async () => {
     try {
         let sqliteConfig: any = [{
             dialect: 'sqlite',
