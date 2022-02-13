@@ -1,11 +1,5 @@
 import { Sequelize, ModelCtor, Model, Transaction } from 'sequelize'
-import * as sqlite3 from 'sqlite3'
-import * as sqlite from 'sqlite'
-
 type TablesStructure = { [tableName: string]: (s: Sequelize, o: { [key: string]: any }, t: string) => ModelCtor<Model<any, any>> }
-export type TablesType = Record<keyof TablesStructure, ModelCtor<Model<any, any>>>;
-export type ConnectionType = sqlite.Database<sqlite3.Database, sqlite3.Statement>;
-export type OrmConnectionType = { sequelize: Sequelize, tables: TablesType, transaction: Transaction }
 export interface DefineTables {
     declareTables: (sequelize: Sequelize, cacheTabs: Array<any>, transition?: Transaction) => Record<keyof TablesStructure, ModelCtor<Model<any, any>>>;
 }
