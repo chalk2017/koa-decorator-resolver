@@ -20,13 +20,13 @@ export interface DefineTables {
     declareTables: (sequelize: Sequelize, cacheTabs: Array<any>, transition?: Transaction) => Record<keyof TablesStructure, ModelCtor<Model<any, any>>>;
 }
 // 装饰器
-interface Option {
+interface Option<T> {
     useOrm?: boolean,
     autoClose?: boolean,
     useTransaction?: boolean,
-    tables?: Array<string>
+    tables?: Array<keyof T>
 }
-export class defineTables implements DefineTables {
+export class defineTables<T> implements DefineTables {
     tablesStructure?: TablesStructure;
     relation?: (tables: any) => any;
     sequelize?: Sequelize;
@@ -173,7 +173,7 @@ export class defineTables implements DefineTables {
         })
     }
     // 装饰器
-    Sqlite(option?: Option) {
+    Sqlite(option?: Option<T>) {
         const _this = this;
         const decoratorFunc = (target: any, propertyKey: string, { configurable, enumerable, value, writable }: PropertyDescriptor) => {
             const func = async (...args: any) => {
@@ -194,7 +194,9 @@ export class defineTables implements DefineTables {
                             transaction.commit();
                         }
                     } catch (err) {
-                        transaction.rollback();
+                        if (useTransaction) {
+                            transaction.rollback();
+                        }
                         throw err;
                     }
                     // res = await (value as Function).apply(target, args);
