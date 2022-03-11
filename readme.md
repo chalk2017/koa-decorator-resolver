@@ -1,7 +1,7 @@
 # koa-decorator-resolver :zap:
 [![license:MIT](https://img.shields.io/badge/License-MIT-green)](https://www.npmjs.com/package/koa-decorator-resolver) [![node:>=14](https://img.shields.io/badge/node-^14.x.x-blue)](https://www.python.org/downloads/) [![SQL@Support:sqlite|postgres|mysql](https://img.shields.io/badge/SQL%40Support-sqlite%20%7C%20postgres%20%7C%20mysql-lightgrey)](https://github.com/chalk2017/koa-decorator-resolver) 
 
-**koa服务端框架装饰器解决方案**
+**This is a solution with using decorator in Koa**
 
 > Database orm: sequelize=^6.x.x
 
@@ -13,12 +13,13 @@
   - [plugins define](#plugins-define)
 - [Use Database](#Use-Database)
   - [config database](#config-database)
-    - [use parameters](#use-parameters)
-    - [use env & db file](#use-file)
-  - [use sequelize](#use-sequelize)
-  - [declare tables](#declare-tables)
-  - [use transaction](#use-transaction)
+    - [create connection instance](#create-connection-instance)
+    - [declare tables](#declare-tables)
+    - [declare decorator](#declare-decorator)
+    - [use sequelize](#use-sequelize)
+    - [use transaction](#use-transaction)
   - [mysql & postgres](#mysql-postgres)
+  - [use env & db file](#use-file)
 - [Common Restful](#Common-Restful)
   - [how to use it](#get-post)
 
@@ -27,15 +28,15 @@
 # install package
 npm install koa-decorator-resolve
 
-# if you need to use sqlite database, you need to install the driver of sqlite, such as
+# if you need sqlite database, you will need to install the sqlite driver, such as
 npm install sqlite@4.x.x sqlite3@5.x.x
 
-# if you need to use mysql database, you need to install the driver of mysql, such as
+# if you need mysql database, you will need to install the mysql driver, such as
 npm install mysql2@2.x.x
 ```
 -----
 ### Default-Restful
-> The default method of restful is post, and the url is ":hostname/:className/:functionName"
+> You don't need to declare restful urls, the names of classes and functions are automatically resolved to urls, and the url format is ":hostname/:className/:functionName", but the default restful method is "post", if you want to send a get request, you can add a custom decorators to resolve it.
 #### how-to-use-it
 - **file: index.ts**
 ```typescript
@@ -137,3 +138,107 @@ export class serviceModule {
     // the result of request : {'transfer-after':456}
 }
 ```
+
+### Use-Database
+> Invoke the database through the decorator
+#### config-database
+> Create a instance of database with tables
+1. create-connection-instance
+> the first is create a database connection.
+- **file: initTables.ts**
+```typescript
+import {defineTables} from 'koa-decorator-resolve';
+import {TablesType,tablesStructure,relationCallback} from './declareTables';
+export const tablesInstance = new defineTables<TablesType>(tablesStructure, relationCallback, {
+    connConf: {
+        driver: 'sqlite',
+        path: require('path').resolve('db/database_file.db')
+    }
+});
+// const tablesInstance = new defineTables<TablesType>(tablesStructure, relation, {
+//     connConf: {
+//         driver: 'mysql',
+//         database: 'database',
+//         username: 'db_user',
+//         password: 'db_password',
+//         host: '127.0.0.1',
+//         port: 2100
+//     }
+// });
+```
+2. declare-tables
+> Used to generate models of "sequelize", it is base in sequelize.
+- **file: declareTables.ts**
+```typescript
+// it used sequelize' type
+import { STRING, INTEGER, BIGINT, DATE, TIME, DATEONLY, BOOLEAN, FLOAT, DOUBLE } from 'sequelize';
+// this is tables' structure
+export const tablesStructure = {
+    ACCESS: ({sequelize,tableName,option}) => sequelize.define(tableName, {
+        id: {
+          type: BIGINT,
+          primaryKey: true,
+        },
+        user_name: STRING(20),
+        role: STRING(4),
+        access: INTEGER,
+        begin_date: DATE,
+        end_date: DATE,
+    }, option)
+}
+export const TablesType = Record<keyof typeof tablesStructure, any>;
+// Relationships between tables can be defined here
+export const relationCallback = (tableModels) => {
+    const accessModel = tableModels['ACCESS'];
+    // ...
+}
+```
+3. declare-decorator
+- **file: declareDecorator.ts**
+```typescript
+import {tablesInstance} from './initTables';
+export const Sqlite = tablesInstance.Database.bind(tablesInstance) as typeof tablesInstance.Database;
+```
+4. use-sequelize
+> You can use decorators in service modules
+```typescript
+// the restful modules
+import {OrmConnectionType} from 'koa-decorator-resolve';
+import {Sqlite} from './declareDecorator';
+export class serviceModule {
+    private db: OrmConnectionType;
+    @Sqlite({
+        useOrm:true,
+        tables:['ACCESS'] // If this parameter is not defined, all tables were defined
+    })
+    async func(data){
+        return await this.db.ACCESS.findAll() // Usage refer to the website of sequelize
+    }
+}
+```
+5. use-transaction
+> You can use transaction in service modules
+```typescript
+// the restful modules
+import {OrmConnectionType} from 'koa-decorator-resolve';
+import {Sqlite} from './declareDecorator';
+export class serviceModule {
+    private db: OrmConnectionType;
+    @Sqlite({
+        useOrm:true,
+        tables:['ACCESS'],
+        useTransaction:true // use transaction
+    })
+    async func(data){
+        return await this.db.ACCESS.findAll() // Usage refer to the website of sequelize
+    }
+}
+```
+#### mysql-postgres
+
+
+#### use-file
+
+### Common-Restful
+
+#### get-post

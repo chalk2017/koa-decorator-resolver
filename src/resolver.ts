@@ -216,7 +216,7 @@ export class defineTables<T> implements DefineTables {
     });
   }
   // 装饰器
-  Sqlite(option?: Option<T>) {
+  Database(option?: Option<T>) {
     const _this = this;
     const decoratorFunc = (
       target: any,
@@ -268,6 +268,8 @@ export class defineTables<T> implements DefineTables {
     };
     return decoratorFunc;
   }
+  // 废弃装饰器
+  Sqlite = this.Database;
 }
 
 // 创建通用sqlite连接
@@ -618,7 +620,7 @@ export const routeBinder = (router, serviceModules, config = {}) => {
     // 获取模块函数名
     const moduleFuncs = Object.getOwnPropertyNames(
       serviceModule.prototype
-    ).filter((f) => f !== "constructor" && f !== "$inject");
+    ).filter((f) => f !== "constructor" && f !== "$inject" && f.toLowerCase() !== "db");
     // const moduleFuncs = Object.getOwnPropertyNames(serviceModule.prototype).filter((f) => f !== 'constructor');
     // 实例化模块
     const moduleObj = Reflect.construct(serviceModule, []);
