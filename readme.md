@@ -1,14 +1,14 @@
 # koa-decorator-resolver :zap:
-[![license:MIT](https://img.shields.io/badge/License-MIT-green)](https://www.npmjs.com/package/koa-decorator-resolver) [![node:>=14](https://img.shields.io/badge/node-^14.x.x-blue)](https://www.python.org/downloads/) [![SQL@Support:sqlite|postgres|mysql](https://img.shields.io/badge/SQL%40Support-sqlite%20%7C%20postgres%20%7C%20mysql-lightgrey)](https://github.com/chalk2017/koa-decorator-resolver) 
+[![license:MIT](https://img.shields.io/badge/License-MIT-green)](https://www.npmjs.com/package/koa-decorator-resolver) [![SQL@Support:sqlite|postgres|mysql](https://img.shields.io/badge/SQL%40Support-sqlite%20%7C%20postgres%20%7C%20mysql-lightgrey)](https://github.com/chalk2017/koa-decorator-resolver) 
+[![sequelize:^6.x.x](https://img.shields.io/badge/sequelize@Support-6-blue)](https://www.sequelize.com.cn/)
 
 **This is a solution with using decorator in Koa**
 
 > **Version support**
+> node=^14.x.x
 > koa=^2.x.x
 > koa-router=^7.x.x
 > sequelize=^6.x.x
-> 
-
 ------------
 - ## Directory
 - [Install](#Install)
