@@ -16,11 +16,11 @@ import { Database as SqliteDatabase } from "sqlite";
  */
 // export type TablesKeyType = keyof typeof tablesStructure;
 type TablesStructure = {
-  [tableName: string]: (
+  [tableName: string]: (i: {
     s: Sequelize,
+    t: string,
     o: { [key: string]: any },
-    t: string
-  ) => ModelCtor<Model<any, any>>;
+  }) => ModelCtor<Model<any, any>>;
 };
 export type TablesType = Record<
   keyof TablesStructure,

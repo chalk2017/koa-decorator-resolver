@@ -6,15 +6,17 @@ const sequelize_1 = require("sequelize");
 class defineTables {
     tablesStructure;
     relation;
+    connConf;
     sequelize;
     sqlite;
     sqlite3;
-    constructor(tablesStructure, relation, sequelize, sqlite, sqlite3) {
+    constructor(tablesStructure, relation, params) {
         this.tablesStructure = tablesStructure;
         this.relation = relation;
-        this.sequelize = sequelize;
-        this.sqlite = sqlite;
-        this.sqlite3 = sqlite3;
+        this.connConf = params?.connConf;
+        this.sequelize = params?.sequelize;
+        this.sqlite = params?.sqlite;
+        this.sqlite3 = params?.sqlite3;
     }
     // 定义表
     declareTables(sequelize, cacheTabs, transition) {
@@ -152,7 +154,7 @@ class defineTables {
         });
     }
     // 装饰器
-    Sqlite(option) {
+    Database(option) {
         const _this = this;
         const decoratorFunc = (target, propertyKey, { configurable, enumerable, value, writable }) => {
             const func = async (...args) => {
@@ -160,7 +162,7 @@ class defineTables {
                 const useTransaction = option?.useTransaction ?? false; // 是否使用事物，默认false
                 let res;
                 if (option?.useOrm) {
-                    const sequelize = await (0, exports.ormConnectionCreate)(_this.sequelize)();
+                    const sequelize = await (0, exports.ormConnectionCreate)(_this.sequelize)(_this.connConf);
                     let transaction = null;
                     if (useTransaction) {
                         transaction = await sequelize.transaction();
@@ -198,6 +200,8 @@ class defineTables {
         };
         return decoratorFunc;
     }
+    // 废弃装饰器
+    Sqlite = this.Database;
 }
 exports.defineTables = defineTables;
 // 创建通用sqlite连接
@@ -222,7 +226,7 @@ const connectionCreate = (_sqlite, _sqlite3) => async () => {
 };
 exports.connectionCreate = connectionCreate;
 // 创建orm通用连接
-const ormConnectionCreate = (_Sequelize) => async () => {
+const ormConnectionCreate = (_Sequelize) => async (connConf) => {
     try {
         let sqliteConfig = [
             {
@@ -230,7 +234,7 @@ const ormConnectionCreate = (_Sequelize) => async () => {
                 storage: require(require("path").resolve("db.sqlite.js")).path,
             },
         ];
-        const commonConfig = loadConfig();
+        const commonConfig = loadConfig(connConf);
         if (commonConfig) {
             sqliteConfig = commonConfig;
         }
@@ -243,37 +247,84 @@ const ormConnectionCreate = (_Sequelize) => async () => {
 };
 exports.ormConnectionCreate = ormConnectionCreate;
 // 读取数据库配置文件
-const loadConfig = () => {
+const loadConfig = (connConf) => {
     // parsed: /项目根目录/.env
     // .env: DB_DRIVER=sqlite
+    if (connConf) {
+        if (connConf.driver === "sqlite") {
+            return [
+                {
+                    dialect: "sqlite",
+                    storage: connConf.path,
+                },
+            ];
+        }
+        else if (connConf.driver === "mysql") {
+            return [
+                connConf.database,
+                connConf.username,
+                connConf.password,
+                {
+                    host: connConf.host,
+                    port: connConf.port,
+                    dialect: "mysql",
+                },
+            ];
+        }
+        else if (connConf.driver === "postgres") {
+            return [
+                connConf.database,
+                connConf.username,
+                connConf.password,
+                {
+                    host: connConf.host,
+                    port: connConf.port,
+                    dialect: "postgres",
+                },
+            ];
+        }
+        else {
+            return [];
+        }
+    }
     const { parsed } = require("dotenv").config();
     if (parsed.DB_DRIVER === "sqlite") {
-        const sqliteConfig = require(require("path").resolve("db.sqlite.js"));
+        const _connConf = require(require("path").resolve("db.sqlite.js"));
         return [
             {
                 dialect: "sqlite",
-                storage: sqliteConfig.path,
+                storage: _connConf.path,
             },
         ];
     }
     else if (parsed.DB_DRIVER === "mysql") {
-        const mysqlConfig = require(require("path").resolve("db.mysql.js"));
+        const _connConf = require(require("path").resolve("db.mysql.js"));
         return [
-            mysqlConfig.database,
-            mysqlConfig.username,
-            mysqlConfig.password,
+            _connConf.database,
+            _connConf.username,
+            _connConf.password,
             {
-                host: mysqlConfig.host,
-                port: mysqlConfig.port,
+                host: _connConf.host,
+                port: _connConf.port,
                 dialect: "mysql",
             },
         ];
     }
-    else if (parsed.DB_DRIVER === "postgre") {
-        return null;
+    else if (parsed.DB_DRIVER === "postgres") {
+        const _connConf = require(require("path").resolve("db.postgres.js"));
+        return [
+            _connConf.database,
+            _connConf.username,
+            _connConf.password,
+            {
+                host: _connConf.host,
+                port: _connConf.port,
+                dialect: "postgres",
+            },
+        ];
     }
     else {
-        return null;
+        return [];
     }
 };
 /**
@@ -453,12 +504,12 @@ const servInjector = (target, funcName, config) => {
 };
 exports.servInjector = servInjector;
 // 路由绑定方法
-const routeBinder = (router, serviceModules, config) => {
+const routeBinder = (router, serviceModules, config = {}) => {
     const controllers = {};
     for (let name in serviceModules) {
         const serviceModule = serviceModules[name];
         // 获取模块函数名
-        const moduleFuncs = Object.getOwnPropertyNames(serviceModule.prototype).filter((f) => f !== "constructor" && f !== "$inject");
+        const moduleFuncs = Object.getOwnPropertyNames(serviceModule.prototype).filter((f) => f !== "constructor" && f !== "$inject" && f.toLowerCase() !== "db");
         // const moduleFuncs = Object.getOwnPropertyNames(serviceModule.prototype).filter((f) => f !== 'constructor');
         // 实例化模块
         const moduleObj = Reflect.construct(serviceModule, []);

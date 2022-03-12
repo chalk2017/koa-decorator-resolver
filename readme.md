@@ -3,7 +3,11 @@
 
 **This is a solution with using decorator in Koa**
 
-> Database orm: sequelize=^6.x.x
+> **Version support**
+> koa=^2.x.x
+> koa-router=^7.x.x
+> sequelize=^6.x.x
+> 
 
 ------------
 - ## Directory
@@ -155,16 +159,6 @@ export const tablesInstance = new defineTables<TablesType>(tablesStructure, rela
         path: require('path').resolve('db/database_file.db')
     }
 });
-// const tablesInstance = new defineTables<TablesType>(tablesStructure, relation, {
-//     connConf: {
-//         driver: 'mysql',
-//         database: 'database',
-//         username: 'db_user',
-//         password: 'db_password',
-//         host: '127.0.0.1',
-//         port: 2100
-//     }
-// });
 ```
 2. declare-tables
 > Used to generate models of "sequelize", it is base in sequelize.
@@ -234,11 +228,71 @@ export class serviceModule {
     }
 }
 ```
-#### mysql-postgres
-
 
 #### use-file
+> You can also configure the database using configuration files
+```
+# You need to prepare both files in your root directory
+[base] -- .env
+     | -- db.sqlite.js (if you want to use sqlite)
+     | -- db.mysql.js (if you want to use mysql)
+     | -- db.postgres.js (if you want to use postgres)
+
+# The .env file contains the following contents
+--------------------------------
+| # if you want to use sqlite
+| DB_DRIVER=sqlite
+| # if you want to use mysql
+| # DB_DRIVER=mysql
+| # if you want to use postgres
+| # DB_DRIVER=postgres
+--------------------------------
+```
+```javascript
+// The db.sqlite.js file contains the following contents
+module.exports = {
+    path: '/etc/test.db'
+}
+// The db.mysql.js file contains the following contents
+module.exports = {
+    database: 'test_db',
+    username: 'test_user',
+    password: 'test_pw',
+    host: 'localhost',
+    port: 2001
+}
+// The db.postgres.js is same as db.mysql.js
+```
 
 ### Common-Restful
-
+> You can also use post and GET decorators directly
 #### get-post
+- **file: index.ts**
+```typescript
+// the entry of project
+import * as Koa from 'koa';
+import * as Router from 'koa-router';
+import { restfulBinder } from 'koa-decorator-resolve';
+import * as serviceModules from './serviceModules';
+const router = new Router();
+restfulBinder(router,serviceModules);
+app.use(router.routes());
+app.listen(8080, () => {
+    console.log('server start on 8080');
+});
+```
+- **file: serviceModules.ts**
+```typescript
+import {Get,Post} from 'koa-decorator-resolve';
+// the restful modules
+export class serviceModule {
+    @Get('/api/hello/:user')
+    func1(data, ctx){
+        return {user: data.user}
+    }
+    @Post('/api/hello2')
+    func2(data, ctx){
+        return {user: data.user}
+    }
+}
+```
