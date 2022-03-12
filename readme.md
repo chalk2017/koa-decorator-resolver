@@ -4,11 +4,12 @@
 
 **This is a solution with using decorator in Koa**
 
-> **Version support**
-> node=^14.x.x
-> koa=^2.x.x
-> koa-router=^7.x.x
-> sequelize=^6.x.x
+> **Depends on the supported version**
+> 
+[![node:^14.x.x](https://img.shields.io/badge/node-14.x.x-red)](https://nodejs.org/en/)
+[![koa:^2.x.x](https://img.shields.io/badge/koa-2.x.x-red)](https://koa.bootcss.com/)
+[![koa-router:^2.x.x](https://img.shields.io/badge/koa--router-7.x.x-red)](https://wohugb.gitbooks.io/koajs/content/route/koa-router.html)
+[![sequelize:^6.x.x](https://img.shields.io/badge/sequelize-6.x.x-red)](https://www.sequelize.com.cn/)
 ------------
 - ## Directory
 - [Install](#Install)
