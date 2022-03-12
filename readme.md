@@ -22,7 +22,6 @@
     - [declare decorator](#declare-decorator)
     - [use sequelize](#use-sequelize)
     - [use transaction](#use-transaction)
-  - [mysql & postgres](#mysql-postgres)
   - [use env & db file](#use-file)
 - [Common Restful](#Common-Restful)
   - [how to use it](#get-post)
@@ -159,6 +158,18 @@ export const tablesInstance = new defineTables<TablesType>(tablesStructure, rela
         path: require('path').resolve('db/database_file.db')
     }
 });
+```
+```json
+// The connConf of mysql and postgres contains the following contents
+{
+    connConf : {
+        database: 'test_db',
+        username: 'test_user',
+        password: 'test_pw',
+        host: 'localhost',
+        port: 2001
+    }
+}
 ```
 2. declare-tables
 > Used to generate models of "sequelize", it is base in sequelize.
