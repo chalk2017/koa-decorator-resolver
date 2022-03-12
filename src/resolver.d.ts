@@ -58,7 +58,15 @@ export class defineTables<T> {
     transition?: Transaction
   ): Record<keyof TablesStructure, ModelCtor<Model<any, any>>>;
   // 装饰器
+  /** @deprecated use Sqlite */
   Sqlite(
+    option?: Option<T>
+  ): (
+    target: any,
+    propertyKey: string,
+    props: PropertyDescriptor
+  ) => PropertyDescriptor;
+  Database(
     option?: Option<T>
   ): (
     target: any,
