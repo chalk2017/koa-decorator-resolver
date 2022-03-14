@@ -6,7 +6,7 @@
 
 ------------
 
-[![中文|Chinese](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-Chinese-red)]("./readme.md")
+[![中文|Chinese](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-Chinese-red)]("readme.md")
 
 ------------
 

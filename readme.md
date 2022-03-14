@@ -6,7 +6,7 @@
 
 ------------
 
-[![英文|English](https://img.shields.io/badge/%E8%8B%B1%E6%96%87-English-blue)]("./readme_en.md")
+[![英文|English](https://img.shields.io/badge/%E8%8B%B1%E6%96%87-English-blue)]("readme_en.md")
 
 ------------
 
