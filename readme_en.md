@@ -4,12 +4,18 @@
 
 **This is a solution with using decorator in Koa**
 
+------------
+
+[![中文|Chinese](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-Chinese-red)]("./readme.md")
+
+------------
+
 > **Depends on the supported version**
-> 
-[![node:^14.x.x](https://img.shields.io/badge/node-14.x.x-red)](https://nodejs.org/en/)
-[![koa:^2.x.x](https://img.shields.io/badge/koa-2.x.x-red)](https://koa.bootcss.com/)
-[![koa-router:^2.x.x](https://img.shields.io/badge/koa--router-7.x.x-red)](https://wohugb.gitbooks.io/koajs/content/route/koa-router.html)
-[![sequelize:^6.x.x](https://img.shields.io/badge/sequelize-6.x.x-red)](https://www.sequelize.com.cn/)
+
+[![node:^14.x.x](https://img.shields.io/badge/node-14.x.x-orange)](https://nodejs.org/en/)
+[![koa:^2.x.x](https://img.shields.io/badge/koa-2.x.x-orange)](https://koa.bootcss.com/)
+[![koa-router:^2.x.x](https://img.shields.io/badge/koa--router-7.x.x-orange)](https://wohugb.gitbooks.io/koajs/content/route/koa-router.html)
+[![sequelize:^6.x.x](https://img.shields.io/badge/sequelize-6.x.x-orange)](https://www.sequelize.com.cn/)
 ------------
 - ## Directory
 - [Install](#Install)

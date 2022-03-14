@@ -4,12 +4,17 @@
 
 **这是一个可以在koa框架中使用装饰器的解决方案**
 
-> **支持的依赖版本**
-> 
-[![node:^14.x.x](https://img.shields.io/badge/node-14.x.x-red)](https://nodejs.org/en/)
-[![koa:^2.x.x](https://img.shields.io/badge/koa-2.x.x-red)](https://koa.bootcss.com/)
-[![koa-router:^2.x.x](https://img.shields.io/badge/koa--router-7.x.x-red)](https://wohugb.gitbooks.io/koajs/content/route/koa-router.html)
-[![sequelize:^6.x.x](https://img.shields.io/badge/sequelize-6.x.x-red)](https://www.sequelize.com.cn/)
+------------
+
+[![英文|English](https://img.shields.io/badge/%E8%8B%B1%E6%96%87-English-blue)]("./readme_en.md")
+
+------------
+
+> **支持的依赖版本** 
+[![node:^14.x.x](https://img.shields.io/badge/node-14.x.x-orange)](https://nodejs.org/en/)
+[![koa:^2.x.x](https://img.shields.io/badge/koa-2.x.x-orange)](https://koa.bootcss.com/)
+[![koa-router:^2.x.x](https://img.shields.io/badge/koa--router-7.x.x-orange)](https://wohugb.gitbooks.io/koajs/content/route/koa-router.html)
+[![sequelize:^6.x.x](https://img.shields.io/badge/sequelize-6.x.x-orange)](https://www.sequelize.com.cn/)
 ------------
 - ## 目录
 - [安装](#安装)

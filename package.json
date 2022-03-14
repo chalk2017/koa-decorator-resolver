@@ -10,7 +10,16 @@
         "node": ">=14"
     },
     "keywords": [
-        "koa-decorator-resolver"
+        "koa",
+        "decorator",
+        "restful",
+        "get",
+        "post",
+        "bff",
+        "database",
+        "orm",
+        "sequelize",
+        "koa decorator resolver"
     ],
     "license": "MIT",
     "main": "./index.js",
