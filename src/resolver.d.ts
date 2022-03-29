@@ -96,6 +96,15 @@ export function Post(
  * arg2：插件参数 + 页面传输参数
  * arg3：请求交互的ctx对象
  */
+ export type FullResType = {
+  data: any;
+  [injectName: string]: any;
+};
+export type ServiceFunctionArgs = [
+  any /*data*/,
+  FullResType /*fullRes*/,
+  any /*ctx*/
+];
 export type PluginConfig = {
   [injectorName: string]: {
     method?: "get" | "post";
@@ -107,6 +116,11 @@ export type PluginConfig = {
       plugin: (res: any, ctx: any, option?: any) => any;
       replaceProps: boolean;
     };
+    intercept?: (
+      func: (...args: ServiceFunctionArgs) => any,
+      args: ServiceFunctionArgs,
+      option?: any
+    ) => any;
   };
 };
 // server 插件注入

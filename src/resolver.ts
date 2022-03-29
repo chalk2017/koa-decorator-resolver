@@ -1,3 +1,4 @@
+import { PluginConfig, FullResType, Option, TablesStructure, DefineTables } from "./resolver.d";
 // Table 定义模块
 import { Sequelize, ModelCtor, Model, Transaction } from "sequelize";
 // 数据库连接模块
@@ -6,22 +7,22 @@ import {
   Statement as Sqlite3Statement,
 } from "sqlite3";
 import { Database as SqliteDatabase } from "sqlite";
-// type Sequelize = any;
-// type ModelCtor<T> = any;
-// type Model<T, U> = any;
-// type Transaction = any;
-// type Database<T, U> = any;
-/**
- * Table 定义模块
- */
-// export type TablesKeyType = keyof typeof tablesStructure;
-type TablesStructure = {
-  [tableName: string]: (i: {
-    s: Sequelize,
-    t: string,
-    o: { [key: string]: any },
-  }) => ModelCtor<Model<any, any>>;
-};
+// // type Sequelize = any;
+// // type ModelCtor<T> = any;
+// // type Model<T, U> = any;
+// // type Transaction = any;
+// // type Database<T, U> = any;
+// /**
+//  * Table 定义模块
+//  */
+// // export type TablesKeyType = keyof typeof tablesStructure;
+// type TablesStructure = {
+//   [tableName: string]: (i: {
+//     s: Sequelize;
+//     t: string;
+//     o: { [key: string]: any };
+//   }) => ModelCtor<Model<any, any>>;
+// };
 export type TablesType = Record<
   keyof TablesStructure,
   ModelCtor<Model<any, any>>
@@ -32,20 +33,20 @@ export type OrmConnectionType = {
   tables: TablesType;
   transaction: Transaction;
 };
-export interface DefineTables {
-  declareTables: (
-    sequelize: Sequelize,
-    cacheTabs: Array<any>,
-    transition?: Transaction
-  ) => Record<keyof TablesStructure, ModelCtor<Model<any, any>>>;
-}
-// 装饰器
-interface Option<T> {
-  useOrm?: boolean;
-  autoClose?: boolean;
-  useTransaction?: boolean;
-  tables?: Array<keyof T>;
-}
+// export interface DefineTables {
+//   declareTables: (
+//     sequelize: Sequelize,
+//     cacheTabs: Array<any>,
+//     transition?: Transaction
+//   ) => Record<keyof TablesStructure, ModelCtor<Model<any, any>>>;
+// }
+// // 装饰器
+// interface Option<T> {
+//   useOrm?: boolean;
+//   autoClose?: boolean;
+//   useTransaction?: boolean;
+//   tables?: Array<keyof T>;
+// }
 export class defineTables<T> implements DefineTables {
   tablesStructure?: TablesStructure;
   relation?: (tables: any) => any;
@@ -228,7 +229,9 @@ export class defineTables<T> implements DefineTables {
         const useTransaction = option?.useTransaction ?? false; // 是否使用事物，默认false
         let res!: any;
         if (option?.useOrm) {
-          const sequelize = await ormConnectionCreate(_this.sequelize)(_this.connConf);
+          const sequelize = await ormConnectionCreate(_this.sequelize)(
+            _this.connConf
+          );
           let transaction = null;
           if (useTransaction) {
             transaction = await sequelize.transaction();
@@ -293,31 +296,32 @@ export const connectionCreate = (_sqlite?: any, _sqlite3?: any) => async () => {
 };
 
 // 创建orm通用连接
-export const ormConnectionCreate = (_Sequelize?: any) => async (connConf?:any) => {
-  try {
-    let sqliteConfig: any = [
-      {
-        dialect: "sqlite",
-        storage: require(require("path").resolve("db.sqlite.js")).path,
-      },
-    ];
-    const commonConfig = loadConfig(connConf);
-    if (commonConfig) {
-      sqliteConfig = commonConfig;
+export const ormConnectionCreate =
+  (_Sequelize?: any) => async (connConf?: any) => {
+    try {
+      let sqliteConfig: any = [
+        {
+          dialect: "sqlite",
+          storage: require(require("path").resolve("db.sqlite.js")).path,
+        },
+      ];
+      const commonConfig = loadConfig(connConf);
+      if (commonConfig) {
+        sqliteConfig = commonConfig;
+      }
+      const sequelize: Sequelize = new Sequelize(...sqliteConfig);
+      return sequelize;
+    } catch (err) {
+      new Error("DB connect error!");
     }
-    const sequelize: Sequelize = new Sequelize(...sqliteConfig);
-    return sequelize;
-  } catch (err) {
-    new Error("DB connect error!");
-  }
-};
+  };
 
 // 读取数据库配置文件
-const loadConfig = (connConf?:any) => {
+const loadConfig = (connConf?: any) => {
   // parsed: /项目根目录/.env
   // .env: DB_DRIVER=sqlite
-  if(connConf){
-    if(connConf.driver === "sqlite"){
+  if (connConf) {
+    if (connConf.driver === "sqlite") {
       return [
         {
           dialect: "sqlite",
@@ -346,8 +350,8 @@ const loadConfig = (connConf?:any) => {
           dialect: "postgres",
         },
       ];
-    }else{
-      return []
+    } else {
+      return [];
     }
   }
   const { parsed } = require("dotenv").config();
@@ -494,19 +498,33 @@ export const injectRemove = (
  * arg2：插件参数 + 页面传输参数
  * arg3：请求交互的ctx对象
  */
-export type PluginConfig = {
-  [injectorName: string]: {
-    method?: "get" | "post";
-    before?: {
-      plugin: (ctx: any, option?: any) => any;
-      replaceProps: boolean;
-    };
-    after?: {
-      plugin: (res: any, ctx: any, option?: any) => any;
-      replaceProps: boolean;
-    };
-  };
-};
+// export type FullResType = {
+//   data: any;
+//   [injectName: string]: any;
+// };
+// export type ServiceFunctionArgs = [
+//   any /*data*/,
+//   FullResType /*fullRes*/,
+//   any /*ctx*/
+// ];
+// export type PluginConfig = {
+//   [injectorName: string]: {
+//     method?: "get" | "post";
+//     before?: {
+//       plugin: (ctx: any, option?: any) => any;
+//       replaceProps: boolean;
+//     };
+//     after?: {
+//       plugin: (res: any, ctx: any, option?: any) => any;
+//       replaceProps: boolean;
+//     };
+//     intercept?: (
+//       func: (...args: ServiceFunctionArgs) => any,
+//       args: ServiceFunctionArgs,
+//       option?: any
+//     ) => any;
+//   };
+// };
 export const servInjector = (
   target: any,
   funcName: string,
@@ -530,24 +548,38 @@ export const servInjector = (
       }
     }
   }
+  // 获取插件中拦截器
+  let intercept = null;
+  let interceptOption = null;
+  // 只截取第一个装饰器插件中的拦截器
+  for (const injectName in config) {
+    if (config[injectName].intercept) {
+      // 插件是绑定在当前的函数上
+      if (
+        target?.$inject &&
+        target?.$inject[injectName] &&
+        target?.$inject[injectName][funcName]
+      ) {
+        intercept = config[injectName].intercept;
+        interceptOption = target?.$inject[injectName][funcName]?.option;
+        break;
+      }
+    }
+  }
   //
   const controller = async (ctx: any) => {
-    type FullResType = {
-      data: any;
-      [injectName: string]: any;
-    };
     const fullRes = {} as FullResType; // 插件返回值
     let data = null as any;
     // 前拦截器
     for (const injectName in config) {
       // 只处理注解的对象
       if (!config[injectName].before) continue;
-      const pluginFunction = config[injectName].before.plugin;
       if (
         target?.$inject &&
         target?.$inject[injectName] &&
         target?.$inject[injectName][funcName]
       ) {
+        const pluginFunction = config[injectName].before.plugin;
         const pluginRes = await pluginFunction(
           ctx,
           target?.$inject[injectName][funcName]?.option
@@ -579,7 +611,16 @@ export const servInjector = (
       data = fullRes.data;
     }
     // 逻辑处理
-    let res = await target[funcName](data, fullRes, ctx);
+    let res = null;
+    if (intercept) {
+      res = await intercept(
+        target[funcName],
+        [data, fullRes, ctx],
+        interceptOption
+      );
+    } else {
+      res = await target[funcName](data, fullRes, ctx);
+    }
     // 后拦截器
     let hasAfterInjector = false;
     for (const injectName in config) {
@@ -620,7 +661,9 @@ export const routeBinder = (router, serviceModules, config = {}) => {
     // 获取模块函数名
     const moduleFuncs = Object.getOwnPropertyNames(
       serviceModule.prototype
-    ).filter((f) => f !== "constructor" && f !== "$inject" && f.toLowerCase() !== "db");
+    ).filter(
+      (f) => f !== "constructor" && f !== "$inject" && f.toLowerCase() !== "db"
+    );
     // const moduleFuncs = Object.getOwnPropertyNames(serviceModule.prototype).filter((f) => f !== 'constructor');
     // 实例化模块
     const moduleObj = Reflect.construct(serviceModule, []);
@@ -690,7 +733,7 @@ export const restfulBinder = (router, serviceModules) => {
   return controllers;
 };
 // 装饰器类型声明
-export type Injector<T> = (option?: T) => any;
+// export type Injector<T> = (option?: T) => any;
 export const injectorBuilder = (
   injectName,
   callbacks?: { onCreate; onBefore; onAfter }
@@ -701,10 +744,10 @@ export const injectorBuilder = (
   const Injector = (option?: any) => {
     const decoratorFunc = (
       target: any,
-      propertyKey: string,
+      propertyKey: string, // 方法名
       { configurable, enumerable, value, writable }: PropertyDescriptor
     ) => {
-      onCreate(target, propertyKey);
+      onCreate(target, propertyKey, option);
       const func = async (...args) => {
         const _args = await onBefore(...args);
         const _res = await (value as Function).apply(target, _args);
@@ -712,11 +755,48 @@ export const injectorBuilder = (
         return res;
       };
       injectBind(target, propertyKey, {
-        [injectName]: { option }, // 对应 plugins/index.config 下的key名
+        // target['$inject'][injectName][propertyKey] -> { option }
+        [injectName]: { option },
       });
       return { configurable, enumerable, value: func, writable };
     };
     return decoratorFunc;
+  };
+  return Injector;
+};
+
+// 类装饰器
+export const classInjectorBuilder = (
+  injectName,
+  callbacks?: { onDecorate }
+) => {
+  // 定义装饰器工厂
+  const Injector = (option?: any) => {
+    const decoratorFunc = (target: any) => {
+      // 生命周期
+      if (callbacks?.onDecorate) {
+        // 装饰时调用
+        callbacks.onDecorate(target, option);
+      }
+      injectBind(target, "$class", {
+        [injectName]: { option }, // target['$inject'][injectName]['$class'] -> { option }
+      });
+      return target;
+    };
+    return decoratorFunc;
+  };
+  return Injector;
+};
+
+// 参数装饰器
+export const propsInjectorBuilder = (injectName, callbacks: { onInject }) => {
+  const onInject =
+    callbacks?.onInject || ((target, methodName, paramsIndex) => ""); // 参数注入时调用
+  // 定义装饰器工厂
+  const Injector = (options?: any) => {
+    const decoratorFunc = (target: any, methodName: any, paramsIndex: any) => {
+      onInject(target, methodName, paramsIndex);
+    };
   };
   return Injector;
 };
