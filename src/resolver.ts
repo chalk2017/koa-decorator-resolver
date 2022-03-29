@@ -65,7 +65,7 @@ export class defineTables<T> implements DefineTables {
     }
   ) {
     this.tablesStructure = tablesStructure;
-    this.relation = relation;
+    this.relation = relation || (() => "");
     this.connConf = params?.connConf;
     this.sequelize = params?.sequelize;
     this.sqlite = params?.sqlite;

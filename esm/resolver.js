@@ -1,8 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.injectorBuilder = exports.restfulBinder = exports.routeBinder = exports.servInjector = exports.injectRemove = exports.injectBind = exports.Post = exports.Get = exports.ormConnectionCreate = exports.connectionCreate = exports.defineTables = void 0;
+exports.propsInjectorBuilder = exports.classInjectorBuilder = exports.injectorBuilder = exports.restfulBinder = exports.routeBinder = exports.servInjector = exports.injectRemove = exports.injectBind = exports.Post = exports.Get = exports.ormConnectionCreate = exports.connectionCreate = exports.defineTables = void 0;
 // Table 定义模块
 const sequelize_1 = require("sequelize");
+// export interface DefineTables {
+//   declareTables: (
+//     sequelize: Sequelize,
+//     cacheTabs: Array<any>,
+//     transition?: Transaction
+//   ) => Record<keyof TablesStructure, ModelCtor<Model<any, any>>>;
+// }
+// // 装饰器
+// interface Option<T> {
+//   useOrm?: boolean;
+//   autoClose?: boolean;
+//   useTransaction?: boolean;
+//   tables?: Array<keyof T>;
+// }
 class defineTables {
     tablesStructure;
     relation;
@@ -12,7 +26,7 @@ class defineTables {
     sqlite3;
     constructor(tablesStructure, relation, params) {
         this.tablesStructure = tablesStructure;
-        this.relation = relation;
+        this.relation = relation || (() => "");
         this.connConf = params?.connConf;
         this.sequelize = params?.sequelize;
         this.sqlite = params?.sqlite;
@@ -416,6 +430,40 @@ const injectRemove = (classObj, injectName, funcName) => {
     }
 };
 exports.injectRemove = injectRemove;
+// 自动注入
+/**
+ * service方法参数：
+ * arg1：页面传输参数
+ * arg2：插件参数 + 页面传输参数
+ * arg3：请求交互的ctx对象
+ */
+// export type FullResType = {
+//   data: any;
+//   [injectName: string]: any;
+// };
+// export type ServiceFunctionArgs = [
+//   any /*data*/,
+//   FullResType /*fullRes*/,
+//   any /*ctx*/
+// ];
+// export type PluginConfig = {
+//   [injectorName: string]: {
+//     method?: "get" | "post";
+//     before?: {
+//       plugin: (ctx: any, option?: any) => any;
+//       replaceProps: boolean;
+//     };
+//     after?: {
+//       plugin: (res: any, ctx: any, option?: any) => any;
+//       replaceProps: boolean;
+//     };
+//     intercept?: (
+//       func: (...args: ServiceFunctionArgs) => any,
+//       args: ServiceFunctionArgs,
+//       option?: any
+//     ) => any;
+//   };
+// };
 const servInjector = (target, funcName, config) => {
     // 默认post
     let method = "post";
@@ -433,6 +481,22 @@ const servInjector = (target, funcName, config) => {
             }
         }
     }
+    // 获取插件中拦截器
+    let intercept = null;
+    let interceptOption = null;
+    // 只截取第一个装饰器插件中的拦截器
+    for (const injectName in config) {
+        if (config[injectName].intercept) {
+            // 插件是绑定在当前的函数上
+            if (target?.$inject &&
+                target?.$inject[injectName] &&
+                target?.$inject[injectName][funcName]) {
+                intercept = config[injectName].intercept;
+                interceptOption = target?.$inject[injectName][funcName]?.option;
+                break;
+            }
+        }
+    }
     //
     const controller = async (ctx) => {
         const fullRes = {}; // 插件返回值
@@ -442,10 +506,10 @@ const servInjector = (target, funcName, config) => {
             // 只处理注解的对象
             if (!config[injectName].before)
                 continue;
-            const pluginFunction = config[injectName].before.plugin;
             if (target?.$inject &&
                 target?.$inject[injectName] &&
                 target?.$inject[injectName][funcName]) {
+                const pluginFunction = config[injectName].before.plugin;
                 const pluginRes = await pluginFunction(ctx, target?.$inject[injectName][funcName]?.option);
                 fullRes[injectName] = pluginRes;
                 // 替换第一个参数
@@ -474,7 +538,13 @@ const servInjector = (target, funcName, config) => {
             data = fullRes.data;
         }
         // 逻辑处理
-        let res = await target[funcName](data, fullRes, ctx);
+        let res = null;
+        if (intercept) {
+            res = await intercept(target[funcName], [data, fullRes, ctx], interceptOption);
+        }
+        else {
+            res = await target[funcName](data, fullRes, ctx);
+        }
         // 后拦截器
         let hasAfterInjector = false;
         for (const injectName in config) {
@@ -586,13 +656,16 @@ const restfulBinder = (router, serviceModules) => {
     return controllers;
 };
 exports.restfulBinder = restfulBinder;
+// 装饰器类型声明
+// export type Injector<T> = (option?: T) => any;
 const injectorBuilder = (injectName, callbacks) => {
     const onCreate = callbacks?.onCreate || (() => ""); // 装饰器声明时
     const onBefore = callbacks?.onBefore || ((...args) => args); // 函数调用前
     const onAfter = callbacks?.onAfter || ((res) => res); // 函数调用后
     const Injector = (option) => {
-        const decoratorFunc = (target, propertyKey, { configurable, enumerable, value, writable }) => {
-            onCreate(target, propertyKey);
+        const decoratorFunc = (target, propertyKey, // 方法名
+        { configurable, enumerable, value, writable }) => {
+            onCreate(target, propertyKey, option);
             const func = async (...args) => {
                 const _args = await onBefore(...args);
                 const _res = await value.apply(target, _args);
@@ -600,7 +673,8 @@ const injectorBuilder = (injectName, callbacks) => {
                 return res;
             };
             (0, exports.injectBind)(target, propertyKey, {
-                [injectName]: { option }, // 对应 plugins/index.config 下的key名
+                // target['$inject'][injectName][propertyKey] -> { option }
+                [injectName]: { option },
             });
             return { configurable, enumerable, value: func, writable };
         };
@@ -609,4 +683,36 @@ const injectorBuilder = (injectName, callbacks) => {
     return Injector;
 };
 exports.injectorBuilder = injectorBuilder;
+// 类装饰器
+const classInjectorBuilder = (injectName, callbacks) => {
+    // 定义装饰器工厂
+    const Injector = (option) => {
+        const decoratorFunc = (target) => {
+            // 生命周期
+            if (callbacks?.onDecorate) {
+                // 装饰时调用
+                callbacks.onDecorate(target, option);
+            }
+            (0, exports.injectBind)(target, "$class", {
+                [injectName]: { option }, // target['$inject'][injectName]['$class'] -> { option }
+            });
+            return target;
+        };
+        return decoratorFunc;
+    };
+    return Injector;
+};
+exports.classInjectorBuilder = classInjectorBuilder;
+// 参数装饰器
+const propsInjectorBuilder = (injectName, callbacks) => {
+    const onInject = callbacks?.onInject || ((target, methodName, paramsIndex) => ""); // 参数注入时调用
+    // 定义装饰器工厂
+    const Injector = (options) => {
+        const decoratorFunc = (target, methodName, paramsIndex) => {
+            onInject(target, methodName, paramsIndex);
+        };
+    };
+    return Injector;
+};
+exports.propsInjectorBuilder = propsInjectorBuilder;
 //# sourceMappingURL=resolver.js.map

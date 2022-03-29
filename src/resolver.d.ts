@@ -43,8 +43,8 @@ export interface PostgresConnConf {
 export class defineTables<T> {
   constructor(
     tablesStructure: TablesStructure,
-    relation: (tableModels: {
-      [table: string]: ModelCtor<Model<any, any>>;
+    relation?: (tableModels: {
+      [table: string]: ModelCtor<Model<any, any>> | any;
     }) => any,
     params?: {
       connConf?: SqliteConnConf | MysqlConnConf | PostgresConnConf;
