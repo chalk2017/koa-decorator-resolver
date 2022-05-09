@@ -1,7 +1,7 @@
 import { PluginConfig, FullResType, Option, TablesStructure, DefineTables } from "./resolver.d";
 // Table 定义模块
 import { Sequelize, ModelCtor, Model, Transaction } from "sequelize";
-// 数据库连接模块
+// 数据库连接模块 
 import {
   Database as Sqlite3Database,
   Statement as Sqlite3Statement,
