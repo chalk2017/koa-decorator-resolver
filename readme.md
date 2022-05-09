@@ -126,6 +126,10 @@ export const config = {
                 return {'transfer-after':res}
             },
             replaceProps: true, // 是否把钩子方法的返回值替换给请求返回值的body
+        },
+        intercept: (func: (...args: ServiceFunctionArgs) => any, args: ServiceFunctionArgs, option?: any) => {
+            // 拦截器钩子
+            return func(...args)
         }
     }
 }

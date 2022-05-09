@@ -113,6 +113,10 @@ export const config = {
                 return {'transfer-after':res}
             },
             replaceProps: true, // replace service function output return data
+        },
+        intercept: (func: (...args: ServiceFunctionArgs) => any, args: ServiceFunctionArgs, option?: any) => {
+            // interceptor hook
+            return func(...args)
         }
     }
 }
