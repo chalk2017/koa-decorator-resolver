@@ -142,14 +142,3 @@ export function restfulBinder(
 ): { [controller: string]: (ctx: any) => any };
 // 装饰器类型声明
 export type Injector<T> = (option?: T) => any;
-// 装饰器构造器
-export function injectorBuilder(
-  injectName: string,
-  callbacks?: { onCreate; onBefore; onAfter }
-): (
-  option?: any
-) => (
-  target: any,
-  propertyKey: string,
-  props: PropertyDescriptor
-) => PropertyDescriptor;
