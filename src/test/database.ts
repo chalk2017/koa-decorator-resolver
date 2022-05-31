@@ -1,20 +1,31 @@
-import { ormBinder } from "src/database/binder";
+import { Sequelize, STRING, ModelCtor, Model } from "sequelize";
 import {
-  Sequelize,
-  STRING,
-  INTEGER,
-  BIGINT,
-  DATE,
-  TIME,
-  DATEONLY,
-  BOOLEAN,
-  FLOAT,
-  DOUBLE,
-  ModelCtor,
-  Model,
-} from "sequelize";
+  TablesStructureProps,
+  DefineModel,
+  defineTables,
+  Relation,
+  TablesType,
+} from "../index";
+
+// 实体定义方式1
 export const tablesStructure = {
-  USER: (i: any) =>
+  USER: (define: DefineModel) =>
+    define({
+      USERID: {
+        type: STRING(20),
+        primaryKey: true,
+      },
+      USERNAME: {
+        type: STRING(20),
+        primaryKey: true,
+      },
+      PASSWORD: STRING(50),
+    }),
+};
+
+// 实体定义方式2
+export const tablesStructureCustom = {
+  USER: (_, i: TablesStructureProps) =>
     i.s.define(
       i.t,
       {
@@ -31,13 +42,20 @@ export const tablesStructure = {
       i.o
     ),
 };
-export type TablesType = Record<
-  keyof typeof tablesStructure,
-  ModelCtor<Model<any, any>>
->;
-const defineTables = ormBinder<typeof tablesStructure>(
-  tablesStructure,
-  (tables: TablesType) => {}
+// 解析类型
+export type TablesStructureType = typeof tablesStructure;
+// 生成实体
+const defineTablesInstance = defineTables<TablesStructureType>(
+  tablesStructure, // 表结构
+  (tables: TablesType<TablesStructureType>) => {
+    // 表关联管理
+  },
+  {
+    useBaseConfig: false,
+    useAlwaysConnection: false,
+  }
 );
-export const Database = defineTables.Database;
-export const connect = defineTables.connect;
+// 装饰器
+export const Database = defineTablesInstance.Database;
+// 连接
+export const connect = defineTablesInstance.connect;

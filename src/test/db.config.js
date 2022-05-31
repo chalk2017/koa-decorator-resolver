@@ -1,4 +1,4 @@
-// 默认标准配置
+// 默认标准配置，完全sequelize参数，不需要.env
 module.exports = {
   driver: "mysql",
   options: {

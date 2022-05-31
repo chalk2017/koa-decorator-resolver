@@ -1,13 +1,39 @@
-import { Sequelize, ModelCtor, Model, Transaction, Options } from "sequelize";
+import {
+  Sequelize,
+  ModelCtor,
+  Model,
+  Transaction,
+  Options,
+  ModelAttributes,
+  ModelOptions,
+} from "sequelize";
 import { loadConfig, standardTransfor } from "./configurator";
 import { OrmBaseLoader } from "./baseDefined";
 
+export type TablesType<TablesStructureType> = Record<
+  keyof TablesStructureType,
+  ModelCtor<Model<any, any>>
+>;
+
+// 模块接口
+export class InjectOrm<TablesStructureType> {
+  db: DB<TablesType<TablesStructureType>>;
+}
+
+export type DefineModel = (
+  model: ModelAttributes<Model<any, any>>,
+  option?: ModelOptions<Model<any, any>>
+) => ModelCtor<Model<any, any>>;
+export type TablesStructureProps = {
+  s: Sequelize;
+  t: string /* 表名 */;
+  o: { [key: string]: any } /* 参数 */;
+};
 export type TablesStructure = {
-  [tableName: string]: (i: {
-    s: Sequelize;
-    t: string;
-    o: { [key: string]: any };
-  }) => ModelCtor<Model<any, any>>;
+  [tableName: string]: (
+    define: DefineModel,
+    i: TablesStructureProps
+  ) => ModelCtor<Model<any, any>>;
 };
 
 export type Relation = (tableModels: {
@@ -34,10 +60,6 @@ export type DB<T = TablesStructure> = {
   transaction: Transaction;
   tables: T;
 };
-// 模块接口
-export class InjectOrm<T> {
-  db: DB<T>;
-}
 
 export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
   // db实例
@@ -120,20 +142,39 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
   }
 
   // 定义表
-  declareTables(sequelize, cacheTabs, transition) {
-    const commonOpt = {
+  declareTables(
+    sequelize: Sequelize,
+    cacheTabs: string[],
+    transition: Transaction
+  ) {
+    const modelOptions = {
       freezeTableName: true,
       timestamps: false,
     };
+    // 简化模型定义
+    const defineModel =
+      (tableName: string) =>
+      (
+        model: ModelAttributes<Model<any, any>>,
+        option?: ModelOptions<Model<any, any>>
+      ) =>
+        sequelize.define(tableName, model, {
+          ...modelOptions,
+          ...(option || {}),
+        });
+    // 表模型集
     let tables = {};
     if (cacheTabs && cacheTabs.length > 0) {
       // 按需初始化表
       cacheTabs.forEach((tableName) => {
-        const model = this.options.tablesStructure[tableName]({
-          s: sequelize,
-          o: commonOpt,
-          t: tableName,
-        });
+        const model = this.options.tablesStructure[tableName](
+          defineModel(tableName),
+          {
+            s: sequelize,
+            t: tableName,
+            o: modelOptions,
+          }
+        );
         if (transition) {
           tables[tableName] = useTransaction(model, transition);
         } else {
@@ -141,18 +182,22 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
         }
       });
     } else {
-      Object.keys(this.options.tablesStructure).forEach((tableName) => {
-        const model = this.options.tablesStructure[tableName]({
-          s: sequelize,
-          o: commonOpt,
-          t: tableName,
-        });
+      // 全表实例化
+      for (const tableName in this.options.tablesStructure) {
+        const model = this.options.tablesStructure[tableName](
+          defineModel(tableName),
+          {
+            s: sequelize,
+            t: tableName,
+            o: modelOptions,
+          }
+        );
         if (transition) {
           tables[tableName] = useTransaction(model, transition);
         } else {
           tables[tableName] = model;
         }
-      });
+      }
     }
     this.options.relation(tables);
     return tables;

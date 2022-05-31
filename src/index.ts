@@ -7,4 +7,4 @@ export * from './decorator/restful';
 export * from './database/configurator';
 export * from './database/baseDefined';
 export * from './database/sequelize.loader';
-export * from './database/binder';
+export * from './database/sequelize.binder';

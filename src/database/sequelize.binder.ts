@@ -1,15 +1,16 @@
-import { defineDatabase, OrmBaseLoaderConstructor } from "./baseDefined";
+import { defineDatabase } from "./baseDefined";
 import {
   OrmLoader,
   TablesStructure,
   Relation,
   DatabaseOptions,
+  GlobalOptions,
 } from "./sequelize.loader";
 
-export function ormBinder<T = TablesStructure>(
+export function defineTables<T = TablesStructure>(
   tablesStructure: T,
   relation: Relation,
-  option = {}
+  option: Omit<GlobalOptions, "tablesStructure" | "relation"> = {}
 ) {
   const database = new defineDatabase<DatabaseOptions<T>>(OrmLoader, {
     tablesStructure,
