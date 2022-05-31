@@ -19,5 +19,13 @@
     11. **koa,koa-router,websocket,sequelize最新版本测试** []
     12. **sequelize最新版本兼容性测试** []
 
+- v2.0.x
+    1. **适配koa服务端框架summary的封装**
+
+- summary
+    1. **服务端框架封装**
+    2. **pm2封装**
+    3. **接入console-writer**
+
 ### 待完成事项
 
