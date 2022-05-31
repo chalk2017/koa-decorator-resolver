@@ -1,4 +1,7 @@
 # koa-decorator-resolver :zap:
+
+> **文档对应版本：v1.1.x**
+
 [![license:MIT](https://img.shields.io/badge/License-MIT-green)](https://www.npmjs.com/package/koa-decorator-resolver) [![SQL@Support:sqlite|postgres|mysql](https://img.shields.io/badge/SQL%40Support-sqlite%20%7C%20postgres%20%7C%20mysql-lightgrey)](https://github.com/chalk2017/koa-decorator-resolver) 
 [![sequelize:^6.x.x](https://img.shields.io/badge/sequelize@Support-6-blue)](https://www.sequelize.com.cn/)
 
@@ -11,10 +14,27 @@
 ------------
 
 > **支持的依赖版本** 
+
 [![node:^14.x.x](https://img.shields.io/badge/node-14.x.x-orange)](https://nodejs.org/en/)
 [![koa:^2.x.x](https://img.shields.io/badge/koa-2.x.x-orange)](https://koa.bootcss.com/)
 [![koa-router:^2.x.x](https://img.shields.io/badge/koa--router-7.x.x-orange)](https://wohugb.gitbooks.io/koajs/content/route/koa-router.html)
 [![sequelize:^6.x.x](https://img.shields.io/badge/sequelize-6.x.x-orange)](https://www.sequelize.com.cn/)
+
+```json
+// 测试基于以下版本
+{
+    "sequelize": "6.12.0-alpha.1",
+    "koa": "^2.6.2",
+    "koa-router": "^7.4.0",
+    "node": "^14.19.1",
+    "sqlite": "^4.0.23",
+    "sqlite3": "^5.0.2",
+    "mysql2": "^2.3.3",
+    "pg-hstore": "^2.3.4",
+    "pg" : "^7.18.2"
+}
+```
+
 ------------
 - ## 目录
 - [安装](#安装)
@@ -48,11 +68,7 @@ npm install mysql2@2.x.x
 **数据库支持程度**
 > 依赖于Sequelize对数据库的支持
 ```
-sqlite: 100%
-mysql: 50% (不支持池和ssl)
-postgres: 50% (不支持池和ssl)
-MSSQL: 0%
-mariadb: 0%
+sqlite ｜ mysql ｜ postgres(不支持池和ssl)
 ```
 ### 默认请求
 > 不需要定义restful，单纯的通过定义类和函数的方式自动解析成restful请求，请求的Url格式是“类名/函数名”，默认解析成的是Post，如果想要解析成Get或其他请求可以通过自定义插件的方式生成相应装饰器来解决。
@@ -188,12 +204,12 @@ export const tablesInstance = new defineTables<TablesType>(tablesStructure, rela
 ```json
 // 以下是mysql和postgres的配置方法
 {
-    connConf : {
-        database: 'test_db',
-        username: 'test_user',
-        password: 'test_pw',
-        host: 'localhost',
-        port: 2001
+    "connConf" : {
+        "database": "test_db",
+        "username": "test_user",
+        "password": "test_pw",
+        "host": "localhost",
+        "port": 2001
     }
 }
 ```
