@@ -4,7 +4,7 @@ import { PluginConfig, ControllerType, KoaRouterType } from "../type";
 export function routeBinder(
     router: KoaRouterType,
     serviceModules: { [className: string]: any },
-    config: PluginConfig
+    config?: PluginConfig
 ): { [controller: string]: ControllerType };
 
 // 基础restful绑定

@@ -11,6 +11,7 @@ export const loadConfig = (options) => {
      */
     let configFile = 'db.config.js';
     let envArgs = {};
+    // 以.env文件的DB_DRIVER参数做为文件名
     if (env) {
         const { parsed } = require("dotenv").config();
         envArgs = parsed;

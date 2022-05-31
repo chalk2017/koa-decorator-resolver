@@ -25,8 +25,8 @@ export class defineDatabase {
     });
   }
   // 数据库连接
-  async connect(options = {}) {
-    await this.orm?.connect(options);
+  async connect(...args) {
+    await this.orm?.connect(...args);
   }
   // 装饰器
   database(options) {
