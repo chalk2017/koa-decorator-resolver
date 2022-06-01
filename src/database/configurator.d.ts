@@ -1,9 +1,9 @@
-import { Options } from "sequelize/dist";
 // 标准配置转换
-export type Transfor<T> = (
-  configDetail: any,
-  env?: { [key: string]: any }
-) => T;
+export type Transfor<
+  ConfigDetailType = any,
+  EnvType = any,
+  ResultType = any
+> = (configDetail: ConfigDetailType, env?: EnvType) => ResultType;
 export type StandardConfigType<T, D extends string> = {
   driver: keyof D;
   options: {
@@ -24,5 +24,5 @@ export function standardTransfor<T>(
  */
 export function loadConfig<T>(options?: {
   env?: boolean | string;
-  transfor?: (configDetail: any, env?: { [key: string]: any }) => T;
+  transfor?: Transfor<any, any, T>;
 }): T;

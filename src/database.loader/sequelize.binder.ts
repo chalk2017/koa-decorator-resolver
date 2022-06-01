@@ -1,4 +1,4 @@
-import { defineDatabase } from "./baseDefined";
+import { defineDatabase } from "../database/baseDefined";
 import {
   OrmLoader,
   TablesStructure,
@@ -7,9 +7,9 @@ import {
   GlobalOptions,
 } from "./sequelize.loader";
 
-export function defineTables<T extends TablesStructure>(
+export function defineTables<T extends TablesStructure = TablesStructure>(
   tablesStructure: T,
-  relation: Relation,
+  relation: Relation<T>,
   option: Omit<GlobalOptions, "tablesStructure" | "relation"> = {}
 ) {
   const database = new defineDatabase<DatabaseOptions<T>>(OrmLoader, {

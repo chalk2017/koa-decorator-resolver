@@ -7,8 +7,8 @@ import {
   ModelAttributes,
   ModelOptions,
 } from "sequelize";
-import { loadConfig, standardTransfor } from "./configurator";
-import { OrmBaseLoader, OrmInjectTargetType } from "./baseDefined";
+import { loadConfig, standardTransfor, Transfor } from "../database/configurator";
+import { OrmBaseLoader, OrmInjectTargetType } from "../database/baseDefined";
 
 export type TablesModelType<T extends TablesStructure = TablesStructure> =
   Record<keyof T, ModelCtor<Model<any, any>>>;
@@ -43,7 +43,7 @@ export type TablesStructure = {
 
 export type Relation<T extends TablesStructure = TablesStructure> = (
   tableModels: TablesModelType<T>
-) => any;
+) => void;
 
 export type DatabaseOptions<T extends TablesStructure = TablesStructure> = {
   tables?: Array<keyof T>;
@@ -81,7 +81,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     const useBaseConfig =
       this.options.useBaseConfig ?? DefaultOptions.useBaseConfig;
     try {
-      const options =
+      const options: any[] =
         loadConfig({
           env: useBaseConfig ? true : false,
           transfor: useBaseConfig ? baseTransfor : standardTransfor,
@@ -116,7 +116,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     this.db.tables = this.declareTables(
       this.db.sequelize,
       this.db.transaction,
-      options.tables,
+      <string[]>options.tables,
       options.relation
     );
     target.db = this.db;
@@ -160,7 +160,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
   declareTables(
     sequelize: Sequelize,
     transition: Transaction,
-    cacheTabs: Array<keyof TablesStructure>,
+    cacheTabs: string[],
     relation: Relation
   ) {
     const modelOptions = {
@@ -182,7 +182,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     let tables = {};
     if (cacheTabs && cacheTabs.length > 0) {
       // 按需初始化表
-      cacheTabs.forEach((tableName: string) => {
+      cacheTabs.forEach((tableName) => {
         const model = this.options.tablesStructure[tableName](
           defineModel(tableName),
           {
@@ -278,10 +278,10 @@ export type BaseConfigType = {
 };
 // 简化配置
 /** @deprecated use baseTransfor */
-export const baseTransfor = (
-  configDetail: BaseConfigType,
-  env: { DB_DRIVER: "mysql" | "postgres" | "sqlite" }
-) => {
+export const baseTransfor: Transfor<
+  BaseConfigType,
+  { DB_DRIVER: "mysql" | "postgres" | "sqlite" }
+> = (configDetail, env) => {
   const driver = env.DB_DRIVER;
   if (driver === "sqlite") {
     return [

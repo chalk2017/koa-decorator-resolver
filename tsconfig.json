@@ -8,7 +8,6 @@
         "emitDecoratorMetadata": true,
         "rootDir": "src",
         "baseUrl": ".",
-        "outDir": "esm",
         "typeRoots": [
             "types"
         ],
@@ -16,10 +15,10 @@
             "node"
         ],
     },
+    "include": [
+        "src/**/*"
+    ],
     "exclude": [
-        "node_modules",
-        "backup",
-        "src/test.ts",
-        "src/index.ts"
+        "node_modules"
     ]
 }

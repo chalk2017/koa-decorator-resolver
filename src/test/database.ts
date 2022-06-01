@@ -47,7 +47,7 @@ export type TablesStructureType = typeof tablesStructure;
 // 生成实体
 const defineTablesInstance = defineTables<TablesStructureType>(
   tablesStructure, // 表结构
-  (tables: TablesModelType<TablesStructureType>) => {
+  (tables) => {
     // 表关联管理
   },
   {

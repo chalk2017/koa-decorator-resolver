@@ -6,5 +6,5 @@ export * from './decorator/factory';
 export * from './decorator/restful';
 export * from './database/configurator';
 export * from './database/baseDefined';
-export * from './database/sequelize.loader';
-export * from './database/sequelize.binder';
+export * from './database.loader/sequelize.loader';
+export * from './database.loader/sequelize.binder';
