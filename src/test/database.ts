@@ -4,7 +4,7 @@ import {
   DefineModel,
   defineTables,
   Relation,
-  TablesType,
+  TablesModelType,
 } from "../index";
 
 // 实体定义方式1
@@ -47,7 +47,7 @@ export type TablesStructureType = typeof tablesStructure;
 // 生成实体
 const defineTablesInstance = defineTables<TablesStructureType>(
   tablesStructure, // 表结构
-  (tables: TablesType<TablesStructureType>) => {
+  (tables: TablesModelType<TablesStructureType>) => {
     // 表关联管理
   },
   {

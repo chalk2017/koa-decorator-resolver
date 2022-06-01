@@ -8,16 +8,21 @@ import {
   ModelOptions,
 } from "sequelize";
 import { loadConfig, standardTransfor } from "./configurator";
-import { OrmBaseLoader } from "./baseDefined";
+import { OrmBaseLoader, OrmInjectTargetType } from "./baseDefined";
 
-export type TablesType<TablesStructureType> = Record<
-  keyof TablesStructureType,
-  ModelCtor<Model<any, any>>
->;
+export type TablesModelType<T extends TablesStructure = TablesStructure> =
+  Record<keyof T, ModelCtor<Model<any, any>>>;
 
 // 模块接口
-export class InjectOrm<TablesStructureType> {
-  db: DB<TablesType<TablesStructureType>>;
+export interface OrmInterface<T extends TablesStructure = TablesStructure>
+  extends OrmInjectTargetType {
+  db: DB<T>;
+}
+
+export class OrmSequelize<T extends TablesStructure = TablesStructure>
+  implements OrmInterface
+{
+  db: DB<T>;
 }
 
 export type DefineModel = (
@@ -36,12 +41,13 @@ export type TablesStructure = {
   ) => ModelCtor<Model<any, any>>;
 };
 
-export type Relation = (tableModels: {
-  [table: string]: ModelCtor<Model<any, any>> | any;
-}) => any;
+export type Relation<T extends TablesStructure = TablesStructure> = (
+  tableModels: TablesModelType<T>
+) => any;
 
-export type DatabaseOptions<T = TablesStructure> = {
+export type DatabaseOptions<T extends TablesStructure = TablesStructure> = {
   tables?: Array<keyof T>;
+  relation?: Relation<T>;
   useTransaction?: boolean;
 };
 export type GlobalOptions = {
@@ -55,15 +61,15 @@ export const DefaultOptions = {
   useTransaction: false,
   useAlwaysConnection: false,
 };
-export type DB<T = TablesStructure> = {
+export type DB<T extends TablesStructure = TablesStructure> = {
   sequelize: Sequelize;
   transaction: Transaction;
-  tables: T;
+  tables: TablesModelType<T>;
 };
 
 export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
   // db实例
-  db?: DB = {
+  db: DB = {
     sequelize: undefined,
     transaction: undefined,
     tables: undefined,
@@ -90,7 +96,11 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     }
   }
   // 装饰方法调用前触发
-  async onCallBefore(target, funcName, options) {
+  async onCallBefore(
+    target: OrmInterface,
+    funcName: string,
+    options: DatabaseOptions
+  ) {
     // 使用长连接
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
@@ -105,13 +115,18 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     }
     this.db.tables = this.declareTables(
       this.db.sequelize,
+      this.db.transaction,
       options.tables,
-      this.db.transaction
+      options.relation
     );
     target.db = this.db;
   }
   // 装饰方法调用后触发
-  async onCallAfter(target, funcName, options) {
+  async onCallAfter(
+    target: OrmInterface,
+    funcName: string,
+    options: DatabaseOptions
+  ) {
     // 使用长连接
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
@@ -127,7 +142,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     }
   }
   // 装饰方法调用报错时触发
-  async onCallError(target, funcName, options, error) {
+  async onCallError(target: OrmInterface, funcName, options, error) {
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
     const useTransaction = options?.useTransaction ?? false;
@@ -144,8 +159,9 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
   // 定义表
   declareTables(
     sequelize: Sequelize,
-    cacheTabs: string[],
-    transition: Transaction
+    transition: Transaction,
+    cacheTabs: Array<keyof TablesStructure>,
+    relation: Relation
   ) {
     const modelOptions = {
       freezeTableName: true,
@@ -166,7 +182,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     let tables = {};
     if (cacheTabs && cacheTabs.length > 0) {
       // 按需初始化表
-      cacheTabs.forEach((tableName) => {
+      cacheTabs.forEach((tableName: string) => {
         const model = this.options.tablesStructure[tableName](
           defineModel(tableName),
           {
@@ -181,6 +197,9 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
           tables[tableName] = model;
         }
       });
+      if (relation) {
+        relation(tables);
+      }
     } else {
       // 全表实例化
       for (const tableName in this.options.tablesStructure) {
@@ -198,8 +217,11 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
           tables[tableName] = model;
         }
       }
+      // 表关联回调（仅全表实例化时才可用）
+      if (this.options?.relation) {
+        this.options.relation(tables);
+      }
     }
-    this.options.relation(tables);
     return tables;
   }
 }

@@ -7,7 +7,7 @@ import {
   GlobalOptions,
 } from "./sequelize.loader";
 
-export function defineTables<T = TablesStructure>(
+export function defineTables<T extends TablesStructure>(
   tablesStructure: T,
   relation: Relation,
   option: Omit<GlobalOptions, "tablesStructure" | "relation"> = {}
