@@ -21,7 +21,6 @@ export class defineDatabase<DatabaseOptions = any> {
   ) => PropertyDescriptor;
 }
 // 自定义OrmBaseLoader接口
-type a = Record<any, any>;
 export interface OrmBaseLoader<DatabaseOptions = any> {
   connect(...args: any[]): Promise<any>;
   onCallBefore(
