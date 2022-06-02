@@ -1,7 +1,7 @@
 # koa-decorator-resolver :zap:
 
 > **文档对应版本：v1.2.x**
-
+  
 [![license:MIT](https://img.shields.io/badge/License-MIT-green)](https://www.npmjs.com/package/koa-decorator-resolver) [![SQL@Support:sqlite|postgres|mysql](https://img.shields.io/badge/SQL%40Support-sqlite%20%7C%20postgres%20%7C%20mysql-lightgrey)](https://github.com/chalk2017/koa-decorator-resolver) 
 [![sequelize:^6.x.x](https://img.shields.io/badge/sequelize@Support-6-blue)](https://www.sequelize.com.cn/)
 
