@@ -4,7 +4,7 @@
 export type OrmInjectTargetType = {
   [key: string]: any;
 };
-export class defineDatabase<DatabaseOptions = any> {
+export class DefineDatabase<DatabaseOptions = any> {
   constructor(
     ormLoader: OrmBaseLoaderConstructor<DatabaseOptions>,
     options?: { [key: string]: any }

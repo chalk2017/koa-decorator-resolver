@@ -28,7 +28,7 @@ export interface OrmBaseLoader<DatabaseOptions = any> {
 export interface OrmBaseLoaderConstructor<DatabaseOptions = any> {
   new (...args: any[]): OrmBaseLoader<DatabaseOptions>;
 }
-export class defineDatabase<DatabaseOptions = any> {
+export class DefineDatabase<DatabaseOptions = any> {
   // ORM
   orm: OrmBaseLoader = {
     onCallBefore: async () => "",

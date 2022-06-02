@@ -105,7 +105,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
   // 全局选项，外层注入
   options: GlobalOptions;
   // 创建连接
-  async connect(...args) {
+  async connect(...args: any): Promise<void> {
     const useBaseConfig =
       this.options.useBaseConfig ?? DefaultOptions.useBaseConfig;
     try {
@@ -128,7 +128,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     target: OrmInterface,
     funcName: string,
     options: DatabaseOptions
-  ) {
+  ): Promise<void> {
     // 使用长连接
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
@@ -154,7 +154,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     target: OrmInterface,
     funcName: string,
     options: DatabaseOptions
-  ) {
+  ): Promise<void> {
     // 使用长连接
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
@@ -170,7 +170,12 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     }
   }
   // 装饰方法调用报错时触发
-  async onCallError(target: OrmInterface, funcName, options, error) {
+  async onCallError(
+    target: OrmInterface,
+    funcName,
+    options,
+    error
+  ): Promise<void> {
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
     const useTransaction = options?.useTransaction ?? false;
@@ -190,7 +195,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     transition: Transaction,
     cacheTabs: string[],
     relation: Relation
-  ) {
+  ): TablesModelType {
     const modelOptions = {
       freezeTableName: true,
       timestamps: false,
@@ -260,10 +265,27 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
 }
 
 // 使用事务
-export const injectTransaction = (
+export type RewriteModelCtor<T extends keyof ModelCtor<Model<any, any>>> = Pick<
+  ModelCtor<Model<any, any>>,
+  T
+>;
+// 重写属性
+export type RewriteModelProps = RewriteModelCtor<
+| "create"
+| "update"
+| "destroy"
+| "bulkCreate"
+| "findAll"
+| "findOne"
+| "max"
+| "min"
+| "sum"
+| "count"
+>;
+export function injectTransaction(
   model: ModelCtor<Model<any, any>>,
   transaction: Transaction
-) => {
+): RewriteModelProps {
   const rewrite = {
     // 重写方法
     create: async (v, o) => await model.create(v, { transaction, ...o }),
@@ -278,17 +300,15 @@ export const injectTransaction = (
     sum: async (f, o) => await model.sum(f, { transaction, ...o }),
     count: async (o) => await model.count({ transaction, ...o }),
   };
-  return rewrite;
-};
-// 重写属性
-export type RewriteModelProps = ReturnType<typeof injectTransaction>;
+  return rewrite as RewriteModelProps;
+}
 // 重写属性枚举
 export type RewriteModelKeys = keyof RewriteModelProps;
 // 使用事务
-export const useTransaction = (
+export function useTransaction (
   model: ModelCtor<Model<any, any>>,
   transaction: Transaction
-): RewriteModelProps & ModelCtor<Model<any, any>> => {
+): RewriteModelProps & ModelCtor<Model<any, any>> {
   const rewrite = injectTransaction(model, transaction);
   return new Proxy(model, {
     get(target, propertyKey, receiver) {
