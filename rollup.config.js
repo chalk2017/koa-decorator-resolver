@@ -18,9 +18,9 @@ const plugins = [
 
 export default [
   {
-    input: "src/index.ts",
+    input: "lib/index.js",
     output: {
-      file: "lib/resolver.js",
+      file: "es/resolver.js",
       format: "es",
       name: "resolver",
     },

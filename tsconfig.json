@@ -8,6 +8,7 @@
         "emitDecoratorMetadata": true,
         "rootDir": "src",
         "baseUrl": ".",
+        "outDir": "lib",
         "typeRoots": [
             "types"
         ],
