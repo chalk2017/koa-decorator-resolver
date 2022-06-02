@@ -1,20 +1,26 @@
-import resolve from "rollup-plugin-node-resolve"; // 依赖引用插件
-import commonjs from "rollup-plugin-commonjs";
+// import resolve from "rollup-plugin-node-resolve"; // 转node模块
+// import commonjs from "rollup-plugin-commonjs"; // 转commonjs模块
+// import babel from "rollup-plugin-babel"; // es6转es5
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 import json from "rollup-plugin-json";
 import { uglify } from "rollup-plugin-uglify"; // 压缩代码
+import path from 'path';
 const plugins = [
-  // nodejs 插件
-  resolve({
-    extensions: [".js", ".ts"],
-  }),
+  // // commonjs模块转换插件, es5/nodejs转es6
+  // commonjs({
+  //   // include: 'node_modules/**',
+  //   exclude: ["node_modules/**"],
+  //   extensions: [".js", ".ts"],
+  // }),
+  // babel({
+  //   exclude: "node_modules/**",
+  // }),
+  // // nodejs 插件
+  // resolve({
+  //   extensions: [".js", ".ts"],
+  // }),
   // 代码中引入的第三方依赖中需要读取json文件的插件
   json(),
-  // commonjs模块转换插件, es5/nodejs转es6
-  commonjs({
-    // include: 'node_modules/**',
-    exclude: ["node_modules/**"],
-    extensions: [".js", ".ts"],
-  }),
   // 压缩代码
   uglify({
     output: {
@@ -30,10 +36,14 @@ export default [
   {
     input: "lib/index.js",
     output: {
-      file: "es/resolver.js",
-      format: "es",
+      file: "esm/resolver.js",
+      format: "esm",
       name: "resolver",
     },
-    plugins,
-  },
+    plugins: [
+      nodeResolve({
+        rootDir: path.resolve('lib')
+      })
+    ],
+  }
 ];

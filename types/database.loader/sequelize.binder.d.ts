@@ -9,7 +9,7 @@ import {
 export function defineTables<T extends TablesStructure = TablesStructure>(
   tablesStructure: T,
   relation: Relation<typeof tablesStructure>,
-  option: Omit<GlobalOptions, "tablesStructure" | "relation">
+  option?: Omit<GlobalOptions, "tablesStructure" | "relation">
 ): {
   connect: DefineDatabase<DatabaseOptions<typeof tablesStructure>>["connect"];
   Database: DefineDatabase<DatabaseOptions<typeof tablesStructure>>["database"];

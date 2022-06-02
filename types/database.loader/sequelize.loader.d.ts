@@ -74,6 +74,7 @@ export type DatabaseOptions<T extends TablesStructure = TablesStructure> = {
   tables?: Array<keyof T>;
   relation?: Relation<T>;
   useTransaction?: boolean;
+  [key: string]: any;
 };
 // 全局参数
 export type GlobalOptions = {
