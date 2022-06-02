@@ -1,9 +1,9 @@
-import { Database, TablesStructureType } from "./database";
+import { Database, tablesStructure } from "./database";
 import { OrmSequelize } from "../index";
 /**
  * 测试模块
  */
-export class DemoServiceAlpha extends OrmSequelize<TablesStructureType> {
+export class DemoServiceAlpha extends OrmSequelize<typeof tablesStructure> {
   @Database({ tables: [], useTransaction: false, relation: (tables) => ({}) })
   async test1() {
     return await this.db.tables.USER.findAll();

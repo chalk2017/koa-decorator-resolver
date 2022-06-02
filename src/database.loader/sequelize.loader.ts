@@ -7,60 +7,88 @@ import {
   ModelAttributes,
   ModelOptions,
 } from "sequelize";
-import { loadConfig, standardTransfor, Transfor } from "../database/configurator";
+import {
+  loadConfig,
+  standardTransfor,
+  Transfor,
+} from "../database/configurator";
 import { OrmBaseLoader, OrmInjectTargetType } from "../database/baseDefined";
 
-export type TablesModelType<T extends TablesStructure = TablesStructure> =
-  Record<keyof T, ModelCtor<Model<any, any>>>;
+// Json根据Key获取value的类型
+export type ExtractResult<T, U> = T extends keyof U ? U[T] : never;
+// 对象合并，合并后的类型与K相互继承
+export type Combine<T, K = { [key: string]: any }> = {
+  [P in keyof T]: T[P];
+} & K;
+// 对象合并（转换any类型），合并后的类型与K相互继承
+export type CombineAny<T, K = { [key: string]: any }> = {
+  [P in keyof T]: any;
+} & K;
+// 继承Model<any, any>并注入column字段的类型
+export type CombineColumnModel<T> = CombineAny<T, Model<any, any>>;
+
+// 表Models类型
+// export type TablesModelType<T extends TablesStructure = TablesStructure> =
+//   Record<keyof T, ModelCtor<Model<any, any>>>;
+export type TablesModelType<T extends TablesStructure = TablesStructure> = {
+  [P in keyof T]: ReturnType<T[P]> extends any[]
+    ? ModelCtor<CombineColumnModel<ReturnType<T[P]>[0]>>
+    : ModelCtor<Model<any, any>>;
+};
 
 // 模块接口
 export interface OrmInterface<T extends TablesStructure = TablesStructure>
   extends OrmInjectTargetType {
   db: DB<T>;
 }
-
+// 用于Service模块db对象注入的继承类
 export class OrmSequelize<T extends TablesStructure = TablesStructure>
   implements OrmInterface
 {
   db: DB<T>;
 }
-
-export type DefineModel = (
-  model: ModelAttributes<Model<any, any>>,
+// 重写define方法类型
+export type DefineModel<AT = any> = (
+  model: ModelAttributes<Model<any, any>, AT>,
   option?: ModelOptions<Model<any, any>>
 ) => ModelCtor<Model<any, any>>;
+// table构造器参数
 export type TablesStructureProps = {
   s: Sequelize;
   t: string /* 表名 */;
   o: { [key: string]: any } /* 参数 */;
 };
+// table构造类型
 export type TablesStructure = {
   [tableName: string]: (
     define: DefineModel,
     i: TablesStructureProps
-  ) => ModelCtor<Model<any, any>>;
+  ) => ModelCtor<Model<any, any>> | any[];
 };
-
+// table关系方法类型
 export type Relation<T extends TablesStructure = TablesStructure> = (
   tableModels: TablesModelType<T>
 ) => void;
-
+// Database装饰器参数
 export type DatabaseOptions<T extends TablesStructure = TablesStructure> = {
   tables?: Array<keyof T>;
   relation?: Relation<T>;
   useTransaction?: boolean;
 };
+// 全局参数
 export type GlobalOptions = {
   tablesStructure?: TablesStructure;
   relation?: Relation;
   useBaseConfig?: boolean;
   useAlwaysConnection?: boolean;
 };
+// 参数默认值
 export const DefaultOptions = {
   useBaseConfig: true,
   useTransaction: false,
   useAlwaysConnection: false,
 };
+// DB注入对象类型
 export type DB<T extends TablesStructure = TablesStructure> = {
   sequelize: Sequelize;
   transaction: Transaction;
@@ -178,19 +206,31 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
           ...modelOptions,
           ...(option || {}),
         });
+    // 表模块构建
+    const defineTablesModel = (tableName: string) => {
+      let model = null;
+      let res = this.options.tablesStructure[tableName](
+        defineModel(tableName),
+        {
+          s: sequelize,
+          t: tableName,
+          o: modelOptions,
+        }
+      );
+      // 如果返回值是数组，则返回值代表参数
+      if (res instanceof Array) {
+        model = defineModel(tableName)(res[0], res[1]);
+      } else {
+        model = res;
+      }
+      return model;
+    };
     // 表模型集
     let tables = {};
     if (cacheTabs && cacheTabs.length > 0) {
       // 按需初始化表
       cacheTabs.forEach((tableName) => {
-        const model = this.options.tablesStructure[tableName](
-          defineModel(tableName),
-          {
-            s: sequelize,
-            t: tableName,
-            o: modelOptions,
-          }
-        );
+        let model = defineTablesModel(tableName);
         if (transition) {
           tables[tableName] = useTransaction(model, transition);
         } else {
@@ -203,14 +243,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     } else {
       // 全表实例化
       for (const tableName in this.options.tablesStructure) {
-        const model = this.options.tablesStructure[tableName](
-          defineModel(tableName),
-          {
-            s: sequelize,
-            t: tableName,
-            o: modelOptions,
-          }
-        );
+        let model = defineTablesModel(tableName);
         if (transition) {
           tables[tableName] = useTransaction(model, transition);
         } else {

@@ -10,7 +10,7 @@
     2. **orm插件化** [-]
     3. **简化sequelize表实体定义** [-]
     4. **sequelize最新版本兼容** []
-    5. **sequelize表实体快速联想** []
+    5. **sequelize表实体快速联想** [-]
     6. **sequelize长链接与断开自动重连** []
     7. **sequelize表关联简化定义** [-]
     8. **支持sequelize官方配置方式（支持池和ssl）** [-]
