@@ -3,8 +3,8 @@
     "version": "1.2.0",
     "description": "Depend resolve koa decorator",
     "scripts": {
-        "build": "run-s clear build:dev dec build:ts",
-        "dec": "rm -rf lib/**/*.js* lib/*.js* && mv ./lib ./types",
+        "build": "run-s clear build:dev move build:ts",
+        "move": "rm -rf lib/**/*.js* lib/*.js* && mv ./lib ./types",
         "clear": "rm -rf types lib esm cjs",
         "build:dev": "set NODE_ENV=production && tsc -d -p ./tsconfig.build.json && rollup -c rollup.config.js",
         "build:ts": "set NODE_ENV=production && tsc -d -p ./tsconfig.build.json",
