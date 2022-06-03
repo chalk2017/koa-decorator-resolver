@@ -19,24 +19,23 @@ export type CtxType = any;
 export type OptionType = { [prop: string]: string }
 // 控制器类型
 export type ControllerType = (ctx: CtxType) => Promise<void>;
-// 模块函数类型定义
-export type ModuleFuncType = (
-    data: RequestBodyType | BeforeInjectReturnType,
-    fullRes: {
-        data: RequestBodyType,
-        [injectName: string]: BeforeInjectReturnType
-    },
-    ctx: CtxType
-) => Promise<ModuleFuncReturnType>
 // 模块函数参数类型定义
 export type ModuleFuncArgsType = [
     RequestBodyType | BeforeInjectReturnType /*data*/,
     {
-        data: RequestBodyType,
-        [injectName: string]: BeforeInjectReturnType
+      data: RequestBodyType;
+      [injectName: string]: BeforeInjectReturnType;
     } /*fullRes*/,
     CtxType /*ctx*/
-];
+  ];
+  /** @deprecated use ServiceFunctionArgs */
+  export type ServiceFunctionArgs = ModuleFuncArgsType;
+  // 模块函数类型定义
+  export type ModuleFuncType = (
+    ...args: ModuleFuncArgsType
+  ) => Promise<ModuleFuncReturnType>;
+// 装饰器类型声明
+export type Injector<T> = (option?: T) => any;
 // 装饰器插件配置结构
 export type PluginConfig = {
     [injectorName: string]: {

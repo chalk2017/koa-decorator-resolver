@@ -71,6 +71,8 @@ export type Relation<T extends TablesStructure = TablesStructure> = (
 ) => void;
 // Database装饰器参数
 export type DatabaseOptions<T extends TablesStructure = TablesStructure> = {
+  /** @deprecated use useOrm */
+  useOrm?: boolean;
   tables?: Array<keyof T>;
   relation?: Relation<T>;
   useTransaction?: boolean;
