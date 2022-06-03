@@ -1,7 +1,7 @@
 /**
  * 通用类型定义
  */
-export declare type MethodType = 'get' | 'post' | 'put' | 'delete';
+export declare type MethodType = "get" | "post" | "put" | "delete";
 export declare type BeforeInjectReturnType = any;
 export declare type InterceptReturnType = any;
 export declare type ModuleFuncReturnType = any;
@@ -15,10 +15,6 @@ export declare type OptionType = {
     [prop: string]: string;
 };
 export declare type ControllerType = (ctx: CtxType) => Promise<void>;
-export declare type ModuleFuncType = (data: RequestBodyType | BeforeInjectReturnType, fullRes: {
-    data: RequestBodyType;
-    [injectName: string]: BeforeInjectReturnType;
-}, ctx: CtxType) => Promise<ModuleFuncReturnType>;
 export declare type ModuleFuncArgsType = [
     RequestBodyType | BeforeInjectReturnType,
     {
@@ -27,6 +23,10 @@ export declare type ModuleFuncArgsType = [
     },
     CtxType
 ];
+/** @deprecated use ServiceFunctionArgs */
+export declare type ServiceFunctionArgs = ModuleFuncArgsType;
+export declare type ModuleFuncType = (...args: ModuleFuncArgsType) => Promise<ModuleFuncReturnType>;
+export declare type Injector<T> = (option?: T) => any;
 export declare type PluginConfig = {
     [injectorName: string]: {
         method?: MethodType;

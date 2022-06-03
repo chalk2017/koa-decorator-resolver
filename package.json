@@ -1,9 +1,10 @@
 {
     "name": "koa-decorator-resolver",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "description": "Depend resolve koa decorator",
     "scripts": {
         "build": "set NODE_ENV=production && tsc -d -p ./tsconfig.json && rollup -c rollup.config.js",
+        "build-ts": "set NODE_ENV=production && tsc -d -p ./tsconfig.json",
         "build-rollup": "set NODE_ENV=production && rollup -c rollup.config.js"
     },
     "author": "chalk2017",

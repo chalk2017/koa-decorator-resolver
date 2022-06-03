@@ -35,6 +35,8 @@ export declare type TablesStructure = {
 };
 export declare type Relation<T extends TablesStructure = TablesStructure> = (tableModels: TablesModelType<T>) => void;
 export declare type DatabaseOptions<T extends TablesStructure = TablesStructure> = {
+    /** @deprecated use useOrm */
+    useOrm?: boolean;
     tables?: Array<keyof T>;
     relation?: Relation<T>;
     useTransaction?: boolean;
