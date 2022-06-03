@@ -6,8 +6,9 @@
         "sourceMap": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "rootDir": "test",
+        "rootDir": "src",
         "baseUrl": ".",
+        "outDir": "dist",
         "typeRoots": [
             "types"
         ],
@@ -16,7 +17,7 @@
         ],
     },
     "include": [
-        "test/**/*"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules"

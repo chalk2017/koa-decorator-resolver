@@ -1,5 +1,5 @@
 import { Database, tablesStructure } from "./database";
-import { OrmSequelize } from "../index";
+import { OrmSequelize } from "../";
 /**
  * 测试模块
  */

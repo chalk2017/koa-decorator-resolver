@@ -1,6 +1,6 @@
 import * as Koa from "koa";
 import * as Router from "koa-router";
-import { routeBinder } from "src/service/binder";
+import { routeBinder } from "../";
 import * as services from "./services";
 const router = new Router();
 routeBinder(router, services);

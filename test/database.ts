@@ -1,5 +1,5 @@
 import { Sequelize, STRING, ModelCtor, Model } from "sequelize";
-import { TablesStructure, defineTables } from "../index";
+import { TablesStructure, defineTables } from "../";
 
 // // 实体定义: 执行define函数定义（原始sequelize方式）
 // export const tablesStructureSample = {
