@@ -44,7 +44,7 @@ const plugins = [
 
 export default [
   {
-    input: "lib/index.js",
+    input: "dist/index.js",
     output: {
       // dir: "cjs",
       file: "cjs/resolver.js",
@@ -54,7 +54,7 @@ export default [
     plugins,
   },
   {
-    input: "lib/index.js",
+    input: "dist/index.js",
     output: {
       file: "esm/resolver.js",
       format: "esm", // 转es6模块
