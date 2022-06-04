@@ -4,6 +4,7 @@ import {
   Model,
   Transaction,
   Options,
+  PoolOptions,
   ModelAttributes,
   ModelOptions,
 } from "sequelize";
@@ -83,13 +84,14 @@ export type GlobalOptions = {
   relation?: Relation;
   useBaseConfig?: boolean;
   useAlwaysConnection?: boolean;
+  useTransaction?: boolean; // 未使用
 };
 // 参数默认值
 export const DefaultOptions = {
   useBaseConfig: true,
   useTransaction: false,
   useAlwaysConnection: false,
-  defaultConnectionKey: "global-connection",
+  connectionKey: "global-connection",
 };
 // DB注入对象类型
 export type DB<T extends TablesStructure = TablesStructure> = {
@@ -122,8 +124,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
   }): Promise<void> {
     const useBaseConfig =
       this.options.useBaseConfig ?? DefaultOptions.useBaseConfig;
-    const connectionKey =
-      connectOptions?.key || DefaultOptions.defaultConnectionKey;
+    const connectionKey = connectOptions?.key || DefaultOptions.connectionKey;
     this.connectionPool[connectionKey] = {} as Pick<
       DB,
       "sequelize" | "transaction"
@@ -153,10 +154,12 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     target: OrmInterface,
     funcName: string,
     options: DatabaseOptions
-  ): Promise<{ connectionKey: string | symbol }> {
+  ): Promise<{ connectionKey: string | symbol; transaction?: Transaction }> {
     const _this = this;
     // 初始化key
-    let connectionKey: string | symbol = DefaultOptions.defaultConnectionKey;
+    let connectionKey: string | symbol = DefaultOptions.connectionKey;
+    // 初始化事务
+    let transaction: Transaction = null;
     // 使用长连接
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
@@ -166,17 +169,22 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     }
     try {
       // 使用事物
-      const useTransaction =
+      let useTransaction =
         options?.useTransaction ?? DefaultOptions.useTransaction;
+      // 按需设置事务对象
       if (useTransaction) {
-        this.connectionPool[connectionKey].transaction =
-          await this.connectionPool[connectionKey].sequelize.transaction();
+        transaction = await this.connectionPool[
+          connectionKey
+        ].sequelize.transaction();
+      }
+      if (!useAlwaysConnection) {
+        this.connectionPool[connectionKey].transaction = transaction;
       } else {
         this.connectionPool[connectionKey].transaction = null;
       }
       const tables = this.declareTables(
         this.connectionPool[connectionKey].sequelize,
-        this.connectionPool[connectionKey].transaction,
+        transaction,
         <string[]>options.tables,
         options.relation
       );
@@ -198,7 +206,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
         }
       );
       // 返回key
-      return { connectionKey };
+      return { connectionKey, transaction };
     } catch (err) {
       this.distroyConnect(connectionKey);
       throw err;
@@ -209,7 +217,10 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     target: OrmInterface,
     funcName: string,
     options: DatabaseOptions,
-    callBeforeResult: { connectionKey: string | symbol }
+    callBeforeResult: {
+      connectionKey: string | symbol;
+      transaction?: Transaction;
+    }
   ): Promise<void> {
     const connectionKey = callBeforeResult.connectionKey;
     // 使用长连接
@@ -218,7 +229,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     // 使用事物
     const useTransaction = options?.useTransaction ?? false;
     if (useTransaction) {
-      await this.connectionPool[connectionKey].transaction.commit();
+      await callBeforeResult?.transaction?.commit();
     }
     if (!useAlwaysConnection) {
       try {
@@ -232,7 +243,9 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     target: OrmInterface,
     funcName: string,
     options: DatabaseOptions,
-    callBeforeResult: { connectionKey: string | symbol } | undefined,
+    callBeforeResult:
+      | { connectionKey: string | symbol; transaction?: Transaction }
+      | undefined,
     callAfterResult: any,
     error
   ): Promise<void> {
@@ -240,11 +253,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
     const useTransaction = options?.useTransaction ?? false;
     if (useTransaction) {
-      if (callBeforeResult?.connectionKey) {
-        await this.connectionPool[
-          callBeforeResult?.connectionKey
-        ].transaction.rollback();
-      }
+      await callBeforeResult?.transaction?.rollback();
     }
     if (!useAlwaysConnection) {
       try {
@@ -397,6 +406,7 @@ export type BaseConfigType = {
   username?: string; // mysql | postgres
   password?: string; // mysql | postgres
   path?: string; // only sqlite
+  pool?: PoolOptions;
 };
 // 简化配置
 /** @deprecated use baseTransfor */
@@ -404,12 +414,19 @@ export const baseTransfor: Transfor<
   BaseConfigType,
   { DB_DRIVER: "mysql" | "postgres" | "sqlite" }
 > = (configDetail, env) => {
+  const defaultPool = {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  };
   const driver = env.DB_DRIVER;
   if (driver === "sqlite") {
     return [
       {
         dialect: "sqlite",
         storage: configDetail.path,
+        pool: configDetail.pool || defaultPool
       },
     ];
   } else if (driver === "mysql") {
@@ -421,6 +438,7 @@ export const baseTransfor: Transfor<
         host: configDetail.host,
         port: configDetail.port,
         dialect: "mysql",
+        pool: configDetail.pool || defaultPool
       },
     ];
   } else if (driver === "postgres") {
@@ -432,6 +450,7 @@ export const baseTransfor: Transfor<
         host: configDetail.host,
         port: configDetail.port,
         dialect: "postgres",
+        pool: configDetail.pool || defaultPool
       },
     ];
   } else {
