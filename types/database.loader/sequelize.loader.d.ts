@@ -47,6 +47,7 @@ export declare type GlobalOptions = {
     useBaseConfig?: boolean;
     useAlwaysConnection?: boolean;
     useTransaction?: boolean;
+    sequelizeArgs?: any[];
 };
 export declare const DefaultOptions: {
     useBaseConfig: boolean;

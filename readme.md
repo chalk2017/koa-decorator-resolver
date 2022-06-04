@@ -159,7 +159,7 @@ import * as serviceModules from './serviceModules';
 import {config} from './plugins'; // 上一步定义的插件配置
 const router = new Router();
 // 通过注册路由方法的第三个参数注册插件
-routeBinder(router,serviceModules,config as PluginConfig);
+routeBinder(router,serviceModules,config);
 app.use(router.routes());
 app.listen(8080, () => {
     console.log('server start on 8080');
@@ -191,25 +191,21 @@ export class serviceModule {
 - **文件: initTables.ts**
 ```typescript
 import {defineTables} from 'koa-decorator-resolve';
-import {TablesType,tablesStructure,relationCallback} from './declareTables';
-export const tablesInstance = new defineTables<TablesType>(tablesStructure, relationCallback, {
-    connConf: {
-        driver: 'sqlite',
-        path: require('path').resolve('db/database_file.db')
-    }
+import {tablesStructure,relationCallback} from './declareTables';
+export const tablesInstance = new defineTables(tablesStructure, relationCallback, {
+    useAlwaysConnection: true, // 使用长连接，短连接是每次执行方法的时候连接一次，执行完释放连接
+    useBaseConfig: false, //true:配置文件设置基础参数， false: 配置文件应设置为原始sequelize参数
+    sequelizeArgs: [ // 详细参数用法 请参照sequelize库
+      "default_db",
+      "root",
+      "root",
+      {
+        host: "localhost",
+        port: 3306,
+        dialect: "mysql",
+      },
+    ]
 });
-```
-```json
-// 以下是mysql和postgres的配置方法
-{
-    "connConf" : {
-        "database": "test_db",
-        "username": "test_user",
-        "password": "test_pw",
-        "host": "localhost",
-        "port": 2001
-    }
-}
 ```
 ##### 定义表模型
 > 创建数据库表模型，相关技术可以去了解sequelize库
@@ -219,7 +215,7 @@ export const tablesInstance = new defineTables<TablesType>(tablesStructure, rela
 import { STRING, INTEGER, BIGINT, DATE, TIME, DATEONLY, BOOLEAN, FLOAT, DOUBLE } from 'sequelize';
 // 以下是表模型的构造器
 export const tablesStructure = {
-    ACCESS: ({sequelize,tableName,option}) => sequelize.define(tableName, {
+    ACCESS:[{
         id: {
           type: BIGINT,
           primaryKey: true,
@@ -229,9 +225,8 @@ export const tablesStructure = {
         access: INTEGER,
         begin_date: DATE,
         end_date: DATE,
-    }, option)
+    }, option]
 }
-export const TablesType = Record<keyof typeof tablesStructure, any>;
 // 表与表的关系模型可以定义在这里
 export const relationCallback = (tableModels) => {
     const accessModel = tableModels['ACCESS'];
@@ -243,19 +238,21 @@ export const relationCallback = (tableModels) => {
 ```typescript
 import {tablesInstance} from './initTables';
 // 通过实例获取装饰器
-export const Sqlite = tablesInstance.Database.bind(tablesInstance) as typeof tablesInstance.Database;
+export const Database = tablesInstance.Database;
 ```
 ##### 调用Sequelize数据库关系模型库
 > 装饰器注入DB实例
 ```typescript
 // the restful modules
 import {OrmConnectionType} from 'koa-decorator-resolve';
-import {Sqlite} from './declareDecorator';
-export class serviceModule {
-    private db: OrmConnectionType;
-    @Sqlite({
-        useOrm:true,
-        tables:['ACCESS'] // 如果表非常多，可以通过这种方式按需加载表模型，如果没有这个参数，则全部模型都加载
+import {Database} from './declareDecorator';
+import {tablesStructure} from './declareTables';
+export class serviceModule extends OrmSequelize<typeof tablesStructure> {
+    @Database({
+        tables: ['ACCESS','USER'],
+        relation: (tables) => {
+            // 配合tables用于动态表关联
+        }
     })
     async func(data){
         return await this.db.tables.ACCESS.findAll() // 通过表模型直接操作数据库，参照Sequelize
@@ -267,11 +264,10 @@ export class serviceModule {
 ```typescript
 // the restful modules
 import {OrmConnectionType} from 'koa-decorator-resolve';
-import {Sqlite} from './declareDecorator';
-export class serviceModule {
-    private db: OrmConnectionType;
+import {Database} from './declareDecorator';
+import {tablesStructure} from './declareTables';
+export class serviceModule  extends OrmSequelize<typeof tablesStructure> {
     @Sqlite({
-        useOrm:true,
         tables:['ACCESS'],
         useTransaction:true // 开启事务
     })
@@ -312,40 +308,5 @@ module.exports = {
     password: 'test_pw',
     host: 'localhost',
     port: 2001
-}
-```
-
-### 传统Restful请求
-> 你也可以直接用Get和Post装饰器，来装饰方法
-**注意：这种方式不支持插件，但会更自由**
-#### 使用方法
-- **文件: index.ts**
-```typescript
-// the entry of project
-import * as Koa from 'koa';
-import * as Router from 'koa-router';
-import { restfulBinder } from 'koa-decorator-resolve';
-import * as serviceModules from './serviceModules';
-const router = new Router();
-// 通过restfulBinder来注册路由
-restfulBinder(router,serviceModules);
-app.use(router.routes());
-app.listen(8080, () => {
-    console.log('server start on 8080');
-});
-```
-- **文件: serviceModules.ts**
-```typescript
-import {Get,Post} from 'koa-decorator-resolve';
-// 这是restful请求，如需要操作数据库也可以同时用数据库装饰器
-export class serviceModule {
-    @Get('/api/hello/:user')
-    func1(data, ctx){
-        return {user: data.user}
-    }
-    @Post('/api/hello2')
-    func2(data, ctx){
-        return {user: data.user}
-    }
 }
 ```

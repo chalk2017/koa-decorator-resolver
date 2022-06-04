@@ -85,6 +85,7 @@ export type GlobalOptions = {
   useBaseConfig?: boolean;
   useAlwaysConnection?: boolean;
   useTransaction?: boolean; // 未使用
+  sequelizeArgs?: any[];
 };
 // 参数默认值
 export const DefaultOptions = {
@@ -130,7 +131,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
       "sequelize" | "transaction"
     >;
     try {
-      const options: any[] =
+      const options: any[] = this.options?.sequelizeArgs ||
         loadConfig({
           env: useBaseConfig ? true : false,
           transfor: useBaseConfig ? baseTransfor : standardTransfor,
