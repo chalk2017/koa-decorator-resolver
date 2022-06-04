@@ -24,7 +24,7 @@ export function defineTables<T extends TablesStructure = TablesStructure>(
     }
   );
   return {
-    connect: database.connect,
+    connect: database.connect.bind(database),
     Database: database.database,
   };
 }
