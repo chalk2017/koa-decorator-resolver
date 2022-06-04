@@ -1,8 +1,10 @@
-src/index.ts
-src/resolver.ts
-rollup.config.js.txt
-tsconfig.json.js
-backup.zip
-publish.md
 src
 lib
+rollup.config.js
+tsconfig.build.json
+backup.zip
+publish.md
+project.md
+.gitignore
+.npmignore
+.vscode
