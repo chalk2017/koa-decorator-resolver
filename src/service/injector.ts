@@ -1,5 +1,5 @@
 // 自动注入
-import { PluginConfig, MethodType, TargetType, ControllerType } from "../type";
+import { PluginConfig, MethodType, TargetType, ControllerType, UrlType } from "../type";
 /**
  * service方法参数：
  * arg1：页面传输参数
@@ -10,7 +10,7 @@ export function servInjector(
   target: TargetType,
   funcName: string,
   config: PluginConfig
-): [MethodType, ControllerType] {
+): [MethodType, ControllerType, UrlType] {
   // 默认post
   let method: MethodType = "post";
   for (const injectName in config) {
@@ -116,5 +116,5 @@ export function servInjector(
       ctx.body = res;
     }
   };
-  return [method, controller];
+  return [method, controller, null];
 }

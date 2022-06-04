@@ -15,6 +15,7 @@ export declare type OptionType = {
     [prop: string]: string;
 };
 export declare type ControllerType = (ctx: CtxType) => Promise<void>;
+export declare type UrlType = string;
 export declare type ModuleFuncArgsType = [
     RequestBodyType | BeforeInjectReturnType,
     {

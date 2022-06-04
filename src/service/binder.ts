@@ -3,6 +3,10 @@
  */
 import { servInjector } from "./injector";
 import { PluginConfig, ControllerType, KoaRouterType } from "../type";
+export type Hooks = {
+  onBeforeBind?: () => void | Promise<void>; // 绑定前
+  onAfterBind?: () => void | Promise<void>; // 绑定前
+};
 // 不可被遍历的属性
 const InUsingProperty = [
   "constructor", // 构造函数
@@ -13,9 +17,19 @@ const InUsingProperty = [
 export function routeBinder(
   router: KoaRouterType,
   serviceModules: { [className: string]: any },
-  config?: PluginConfig
+  config?: PluginConfig,
+  hooks?: Hooks
 ): { [controller: string]: ControllerType } {
+  // 钩子函数
+  const onBeforeBind = hooks?.onBeforeBind || (async () => null);
+  const onAfterBind = hooks?.onAfterBind || (async () => null);
+  const onAsync = async (hook: any) => await hook();
+  // 控制器池
   const controllers = {};
+  // 绑定前钩子
+  onAsync(onBeforeBind)
+    .then(() => undefined)
+    .catch((err) => console.error(err));
   for (let name in serviceModules) {
     const serviceModule = serviceModules[name];
     // 获取模块函数名
@@ -25,11 +39,23 @@ export function routeBinder(
     // 实例化模块
     const moduleObj = Reflect.construct(serviceModule, []);
     for (let subName of moduleFuncs) {
-      const [method, controller] = servInjector(moduleObj, subName, config);
-      router[method](`/${name}/${subName}`, controller);
+      const [method, controller, url] = servInjector(
+        moduleObj,
+        subName,
+        config
+      );
+      if (url) {
+        router[method](url, controller);
+      } else {
+        router[method](`/${name}/${subName}`, controller);
+      }
       controllers[`${name}_${subName}`] = controller;
     }
   }
+  // 绑定后钩子
+  onAsync(onAfterBind)
+    .then(() => undefined)
+    .catch((err) => console.error(err));
   return controllers;
 }
 

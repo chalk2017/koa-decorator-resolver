@@ -146,7 +146,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
       }
     } catch (err) {
       this.distroyConnect(connectionKey);
-      new Error("DB connect error!");
+      throw err;
     }
   }
   // 装饰方法调用前触发

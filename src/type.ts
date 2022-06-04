@@ -19,6 +19,8 @@ export type CtxType = any;
 export type OptionType = { [prop: string]: string };
 // 控制器类型
 export type ControllerType = (ctx: CtxType) => Promise<void>;
+// URL类型
+export type UrlType = string;
 // 模块函数参数类型定义
 export type ModuleFuncArgsType = [
   RequestBodyType | BeforeInjectReturnType /*data*/,
