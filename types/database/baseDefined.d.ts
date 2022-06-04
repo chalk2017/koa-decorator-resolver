@@ -7,8 +7,8 @@ export declare type OrmInjectTargetType = {
 export interface OrmBaseLoader<DatabaseOptions = any> {
     connect(...args: any[]): Promise<any>;
     onCallBefore(target: OrmInjectTargetType, funcName: string, options: DatabaseOptions): Promise<any>;
-    onCallAfter(target: OrmInjectTargetType, funcName: string, options: DatabaseOptions): Promise<any>;
-    onCallError(target: OrmInjectTargetType, funcName: string, options: DatabaseOptions, error: any): Promise<any>;
+    onCallAfter(target: OrmInjectTargetType, funcName: string, options: DatabaseOptions, callBeforeResult: any): Promise<any>;
+    onCallError(target: OrmInjectTargetType, funcName: string, options: DatabaseOptions, callBeforeResult: any, callAfterResult: any, error: any): Promise<any>;
 }
 export interface OrmBaseLoaderConstructor<DatabaseOptions = any> {
     new (...args: any[]): OrmBaseLoader<DatabaseOptions>;

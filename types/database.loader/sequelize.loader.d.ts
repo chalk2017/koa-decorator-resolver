@@ -1,4 +1,4 @@
-import { Sequelize, ModelCtor, Model, Transaction, ModelAttributes, ModelOptions } from "sequelize";
+import { Sequelize, ModelCtor, Model, Transaction, PoolOptions, ModelAttributes, ModelOptions } from "sequelize";
 import { Transfor } from "../database/configurator";
 import { OrmBaseLoader, OrmInjectTargetType } from "../database/baseDefined";
 export declare type ExtractResult<T, U> = T extends keyof U ? U[T] : never;
@@ -46,11 +46,13 @@ export declare type GlobalOptions = {
     relation?: Relation;
     useBaseConfig?: boolean;
     useAlwaysConnection?: boolean;
+    useTransaction?: boolean;
 };
 export declare const DefaultOptions: {
     useBaseConfig: boolean;
     useTransaction: boolean;
     useAlwaysConnection: boolean;
+    connectionKey: string;
 };
 export declare type DB<T extends TablesStructure = TablesStructure> = {
     sequelize: Sequelize;
@@ -58,12 +60,27 @@ export declare type DB<T extends TablesStructure = TablesStructure> = {
     tables: TablesModelType<T>;
 };
 export declare class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
-    db: DB;
+    connectionPool: {
+        [key: string | number | symbol]: Pick<DB, "sequelize" | "transaction">;
+    };
+    distroyConnect(key: string | symbol | number): void;
     options: GlobalOptions;
-    connect(...args: any): Promise<void>;
-    onCallBefore(target: OrmInterface, funcName: string, options: DatabaseOptions): Promise<void>;
-    onCallAfter(target: OrmInterface, funcName: string, options: DatabaseOptions): Promise<void>;
-    onCallError(target: OrmInterface, funcName: any, options: any, error: any): Promise<void>;
+    connect(connectOptions?: {
+        key?: string | symbol;
+        args?: any[];
+    }): Promise<void>;
+    onCallBefore(target: OrmInterface, funcName: string, options: DatabaseOptions): Promise<{
+        connectionKey: string | symbol;
+        transaction?: Transaction;
+    }>;
+    onCallAfter(target: OrmInterface, funcName: string, options: DatabaseOptions, callBeforeResult: {
+        connectionKey: string | symbol;
+        transaction?: Transaction;
+    }): Promise<void>;
+    onCallError(target: OrmInterface, funcName: string, options: DatabaseOptions, callBeforeResult: {
+        connectionKey: string | symbol;
+        transaction?: Transaction;
+    } | undefined, callAfterResult: any, error: any): Promise<void>;
     declareTables(sequelize: Sequelize, transition: Transaction, cacheTabs: string[], relation: Relation): TablesModelType;
 }
 export declare type RewriteModelCtor<T extends keyof ModelCtor<Model<any, any>>> = Pick<ModelCtor<Model<any, any>>, T>;
@@ -79,6 +96,7 @@ export declare type BaseConfigType = {
     username?: string;
     password?: string;
     path?: string;
+    pool?: PoolOptions;
 };
 /** @deprecated use baseTransfor */
 export declare const baseTransfor: Transfor<BaseConfigType, {
