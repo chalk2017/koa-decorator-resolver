@@ -9,7 +9,7 @@ export function Get(
   propertyKey: string,
   props: PropertyDescriptor
 ) => PropertyDescriptor {
-  const decoratorFunc = (
+  return (
     target,
     propertyKey,
     { configurable, enumerable, value, writable }
@@ -33,7 +33,7 @@ export function Get(
     }
     return { configurable, enumerable, value: func, writable };
   };
-  return decoratorFunc;
+  // return decoratorFunc;
 }
 
 export function Post(
@@ -43,7 +43,7 @@ export function Post(
   propertyKey: string,
   props: PropertyDescriptor
 ) => PropertyDescriptor {
-  const decoratorFunc = (
+  return (
     target,
     propertyKey,
     { configurable, enumerable, value, writable }
@@ -67,5 +67,5 @@ export function Post(
     }
     return { configurable, enumerable, value: func, writable };
   };
-  return decoratorFunc;
+  // return decoratorFunc;
 }

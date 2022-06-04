@@ -25,8 +25,8 @@ export function injectorBuilder(
   const onDecorate = callbacks?.onDecorate || (() => ""); // 装饰器声明时
   const onBefore = callbacks?.onBefore || ((...args) => args); // 函数调用前
   const onAfter = callbacks?.onAfter || ((res) => res); // 函数调用后
-  const Injector = (option) => {
-    const decoratorFunc = (
+  return (option) => {
+    return (
       target,
       propertyKey,
       { configurable, enumerable, value, writable }
@@ -43,9 +43,9 @@ export function injectorBuilder(
       });
       return { configurable, enumerable, value: func, writable };
     };
-    return decoratorFunc;
+    // return decoratorFunc;
   };
-  return Injector;
+  // return Injector;
 }
 /** @deprecated use funcInjectorBuilder */
 export const funcInjectorBuilder = injectorBuilder;

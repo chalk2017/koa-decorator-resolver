@@ -67,7 +67,7 @@ export class DefineDatabase<DatabaseOptions = any> {
     props: PropertyDescriptor
   ) => PropertyDescriptor {
     const _this = this;
-    const decoratorFunc = (
+    return (
       target,
       propertyKey,
       { configurable, enumerable, value, writable }
@@ -102,6 +102,6 @@ export class DefineDatabase<DatabaseOptions = any> {
       };
       return { configurable, enumerable, value: func, writable };
     };
-    return decoratorFunc;
+    // return decoratorFunc;
   }
 }
