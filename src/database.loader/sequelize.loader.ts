@@ -142,6 +142,8 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
       options?.useTransaction ?? DefaultOptions.useTransaction;
     if (useTransaction) {
       this.db.transaction = await this.db.sequelize.transaction();
+    }else{
+      this.db.transaction = null;
     }
     this.db.tables = this.declareTables(
       this.db.sequelize,

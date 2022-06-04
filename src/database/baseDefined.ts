@@ -43,6 +43,7 @@ export class DefineDatabase<DatabaseOptions = any> {
     ormLoader: OrmBaseLoaderConstructor<DatabaseOptions>,
     options?: { [key: string]: any }
   ) {
+    const _this = this;
     // 加载参数
     this.options = options || {};
     // 加载orm
@@ -50,9 +51,11 @@ export class DefineDatabase<DatabaseOptions = any> {
     // 绑定option参数，不允许修改orm.option但可以修改orm.option下的成员
     Object.defineProperty(this.orm, "options", {
       get() {
-        return this.options;
+        return _this.options;
       },
     });
+    // 绑定装饰器引用
+    this.database = this.database.bind(this);
   }
   // 数据库连接
   async connect(...args: any[]): Promise<void> {
