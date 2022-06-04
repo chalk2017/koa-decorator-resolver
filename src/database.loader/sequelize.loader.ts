@@ -89,6 +89,7 @@ export const DefaultOptions = {
   useBaseConfig: true,
   useTransaction: false,
   useAlwaysConnection: false,
+  defaultConnectionKey: "global-connection",
 };
 // DB注入对象类型
 export type DB<T extends TablesStructure = TablesStructure> = {
@@ -98,30 +99,52 @@ export type DB<T extends TablesStructure = TablesStructure> = {
 };
 
 export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
-  // db实例
-  db: DB = {
-    sequelize: undefined,
-    transaction: undefined,
-    tables: undefined,
-  };
+  // 连接池对象
+  connectionPool: {
+    [key: string | number | symbol]: Pick<DB, "sequelize" | "transaction">;
+  } = {};
+  distroyConnect(key: string | symbol | number) {
+    if (
+      this.options?.useAlwaysConnection ??
+      DefaultOptions.useAlwaysConnection
+    ) {
+      // nothing to do
+    } else {
+      delete this.connectionPool[key];
+    }
+  }
   // 全局选项，外层注入
   options: GlobalOptions;
   // 创建连接
-  async connect(...args: any): Promise<void> {
+  async connect(connectOptions?: {
+    key?: string | symbol;
+    args?: any[];
+  }): Promise<void> {
     const useBaseConfig =
       this.options.useBaseConfig ?? DefaultOptions.useBaseConfig;
+    const connectionKey =
+      connectOptions?.key || DefaultOptions.defaultConnectionKey;
+    this.connectionPool[connectionKey] = {} as Pick<
+      DB,
+      "sequelize" | "transaction"
+    >;
     try {
       const options: any[] =
         loadConfig({
           env: useBaseConfig ? true : false,
           transfor: useBaseConfig ? baseTransfor : standardTransfor,
         }) || [];
-      if (args && args.length > 0) {
-        this.db.sequelize = new Sequelize(...args);
+      if (connectOptions?.args && connectOptions?.args.length > 0) {
+        this.connectionPool[connectionKey].sequelize = new Sequelize(
+          ...connectOptions?.args
+        );
       } else {
-        this.db.sequelize = new Sequelize(...options);
+        this.connectionPool[connectionKey].sequelize = new Sequelize(
+          ...options
+        );
       }
     } catch (err) {
+      this.distroyConnect(connectionKey);
       new Error("DB connect error!");
     }
   }
@@ -130,67 +153,109 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     target: OrmInterface,
     funcName: string,
     options: DatabaseOptions
-  ): Promise<void> {
+  ): Promise<{ connectionKey: string | symbol }> {
+    const _this = this;
+    // 初始化key
+    let connectionKey: string | symbol = DefaultOptions.defaultConnectionKey;
     // 使用长连接
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
     if (!useAlwaysConnection) {
-      this.connect();
+      connectionKey = Symbol(funcName);
+      this.connect({ key: connectionKey });
     }
-    // 使用事物
-    const useTransaction =
-      options?.useTransaction ?? DefaultOptions.useTransaction;
-    if (useTransaction) {
-      this.db.transaction = await this.db.sequelize.transaction();
-    }else{
-      this.db.transaction = null;
+    try {
+      // 使用事物
+      const useTransaction =
+        options?.useTransaction ?? DefaultOptions.useTransaction;
+      if (useTransaction) {
+        this.connectionPool[connectionKey].transaction =
+          await this.connectionPool[connectionKey].sequelize.transaction();
+      } else {
+        this.connectionPool[connectionKey].transaction = null;
+      }
+      const tables = this.declareTables(
+        this.connectionPool[connectionKey].sequelize,
+        this.connectionPool[connectionKey].transaction,
+        <string[]>options.tables,
+        options.relation
+      );
+      // target.db = this.db;
+      target.db = new Proxy(
+        {},
+        {
+          get(context: any, propertyKey: string, receiver: any) {
+            if (propertyKey === "sequelize") {
+              return _this.connectionPool[connectionKey].sequelize;
+            } else if (propertyKey === "transaction") {
+              _this.connectionPool[connectionKey].transaction;
+            } else if (propertyKey === "tables") {
+              return tables;
+            } else {
+              return Reflect.get(context, propertyKey, receiver);
+            }
+          },
+        }
+      );
+      // 返回key
+      return { connectionKey };
+    } catch (err) {
+      this.distroyConnect(connectionKey);
+      throw err;
     }
-    this.db.tables = this.declareTables(
-      this.db.sequelize,
-      this.db.transaction,
-      <string[]>options.tables,
-      options.relation
-    );
-    target.db = this.db;
   }
   // 装饰方法调用后触发
   async onCallAfter(
     target: OrmInterface,
     funcName: string,
-    options: DatabaseOptions
+    options: DatabaseOptions,
+    callBeforeResult: { connectionKey: string | symbol }
   ): Promise<void> {
+    const connectionKey = callBeforeResult.connectionKey;
     // 使用长连接
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
     // 使用事物
     const useTransaction = options?.useTransaction ?? false;
     if (useTransaction) {
-      await this.db.transaction.commit();
+      await this.connectionPool[connectionKey].transaction.commit();
     }
     if (!useAlwaysConnection) {
       try {
-        await this.db.sequelize.close();
+        await this.connectionPool[connectionKey].sequelize.close();
       } catch (e) {}
     }
+    this.distroyConnect(connectionKey);
   }
   // 装饰方法调用报错时触发
   async onCallError(
     target: OrmInterface,
-    funcName,
-    options,
+    funcName: string,
+    options: DatabaseOptions,
+    callBeforeResult: { connectionKey: string | symbol } | undefined,
+    callAfterResult: any,
     error
   ): Promise<void> {
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
     const useTransaction = options?.useTransaction ?? false;
     if (useTransaction) {
-      await this.db.transaction.rollback();
+      if (callBeforeResult?.connectionKey) {
+        await this.connectionPool[
+          callBeforeResult?.connectionKey
+        ].transaction.rollback();
+      }
     }
     if (!useAlwaysConnection) {
       try {
-        await this.db.sequelize.close();
+        if (callBeforeResult?.connectionKey) {
+          await this.connectionPool[
+            callBeforeResult?.connectionKey
+          ].sequelize.close();
+        }
       } catch (e) {}
     }
+    this.distroyConnect(callBeforeResult?.connectionKey);
   }
 
   // 定义表
@@ -275,16 +340,16 @@ export type RewriteModelCtor<T extends keyof ModelCtor<Model<any, any>>> = Pick<
 >;
 // 重写属性
 export type RewriteModelProps = RewriteModelCtor<
-| "create"
-| "update"
-| "destroy"
-| "bulkCreate"
-| "findAll"
-| "findOne"
-| "max"
-| "min"
-| "sum"
-| "count"
+  | "create"
+  | "update"
+  | "destroy"
+  | "bulkCreate"
+  | "findAll"
+  | "findOne"
+  | "max"
+  | "min"
+  | "sum"
+  | "count"
 >;
 export function injectTransaction(
   model: ModelCtor<Model<any, any>>,
@@ -309,7 +374,7 @@ export function injectTransaction(
 // 重写属性枚举
 export type RewriteModelKeys = keyof RewriteModelProps;
 // 使用事务
-export function useTransaction (
+export function useTransaction(
   model: ModelCtor<Model<any, any>>,
   transaction: Transaction
 ): RewriteModelProps & ModelCtor<Model<any, any>> {
@@ -323,7 +388,7 @@ export function useTransaction (
       }
     },
   });
-};
+}
 /** @deprecated use BaseConfigType */
 export type BaseConfigType = {
   database?: string; // mysql | postgres

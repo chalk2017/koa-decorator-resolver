@@ -15,12 +15,15 @@ export interface OrmBaseLoader<DatabaseOptions = any> {
   onCallAfter(
     target: OrmInjectTargetType,
     funcName: string,
-    options: DatabaseOptions
+    options: DatabaseOptions,
+    callBeforeResult: any
   ): Promise<any>;
   onCallError(
     target: OrmInjectTargetType,
     funcName: string,
     options: DatabaseOptions,
+    callBeforeResult: any,
+    callAfterResult: any,
     error: any
   ): Promise<any>;
 }
@@ -76,20 +79,23 @@ export class DefineDatabase<DatabaseOptions = any> {
       { configurable, enumerable, value, writable }
     ) => {
       const func = async (...args) => {
-        let res = undefined;
+        let funcResult = undefined;
+        let callBeforeResult = undefined;
+        let callAfterResult = undefined;
         try {
-          await _this.orm.onCallBefore.call(
+          callBeforeResult = await _this.orm.onCallBefore.call(
             _this.orm,
             target,
             propertyKey,
             options
           );
-          res = await value.apply(target, args);
-          await _this.orm.onCallAfter.call(
+          funcResult = await value.apply(target, args);
+          callAfterResult = await _this.orm.onCallAfter.call(
             _this.orm,
             target,
             propertyKey,
-            options
+            options,
+            callBeforeResult
           );
         } catch (err) {
           await _this.orm.onCallError.call(
@@ -97,11 +103,13 @@ export class DefineDatabase<DatabaseOptions = any> {
             target,
             propertyKey,
             options,
+            callBeforeResult,
+            callAfterResult,
             err
           );
           throw err;
         }
-        return res;
+        return funcResult;
       };
       return { configurable, enumerable, value: func, writable };
     };
