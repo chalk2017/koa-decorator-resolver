@@ -1,19 +1,12 @@
 # koa-decorator-resolver :zap:
 
-> **文档对应版本：v1.2.x**
+> **这是一个可以在koa框架中使用装饰器的解决方案**
 
-[![license:MIT](https://img.shields.io/badge/License-MIT-green)](https://www.npmjs.com/package/koa-decorator-resolver) [![SQL@Support:sqlite|postgres|mysql](https://img.shields.io/badge/SQL%40Support-sqlite%20%7C%20postgres%20%7C%20mysql-lightgrey)](https://github.com/chalk2017/koa-decorator-resolver) 
-[![sequelize:^6.x.x](https://img.shields.io/badge/sequelize@Support-6-blue)](https://www.sequelize.com.cn/)
-
-**这是一个可以在koa框架中使用装饰器的解决方案**
+[![license:MIT](https://img.shields.io/badge/License-MIT-green)](https://www.npmjs.com/package/koa-decorator-resolver) ![version:1.2.x](https://img.shields.io/badge/version-1.2.x-blue)
 
 ------------
 
-[![英文|English](https://img.shields.io/badge/%E8%8B%B1%E6%96%87-English-blue)](#)
-
-------------
-
-> **支持的依赖版本** 
+- ### 支持的依赖版本 
 
 [![node:^14.x.x](https://img.shields.io/badge/node-14.x.x-orange)](https://nodejs.org/en/)
 [![koa:^2.x.x](https://img.shields.io/badge/koa-2.x.x-orange)](https://koa.bootcss.com/)
@@ -55,21 +48,28 @@
 ### 安装
 ```
 # 安装依赖
-npm install koa-decorator-resolve
+npm install koa-decorator-resolve 
+```
+
+-----
+
+**数据库支持**
+```
+# 如果要用到mysql数据库，则需要安装驱动，如下：
+npm install mysql2@2.x.x
+
+# 如果要用到postgres数据库，则需要安装驱动，如下：
+npm install pg@7.x.x pg-hstore@2.x.x
 
 # 如果要用到sqlite数据库，则需要安装驱动，如下：
 npm install sqlite@4.x.x sqlite3@5.x.x
-
-# 如果要用到mysql数据库，则需要安装驱动，如下：
-npm install mysql2@2.x.x
 ```
------
+> 完全依赖于Sequelize对数据库的支持，详细参照：[https://www.sequelize.com.cn/](https://www.sequelize.com.cn/)
 
-**数据库支持程度**
-> 依赖于Sequelize对数据库的支持
 
 ### 默认请求
 > 不需要定义restful，单纯的通过定义类和函数的方式自动解析成restful请求，请求的Url格式是“类名/函数名”，默认解析成的是Post，如果想要解析成Get或其他请求可以通过自定义插件的方式生成相应装饰器来解决。
+
 #### 使用方法
 - **文件: index.ts**
 ```typescript
@@ -120,7 +120,7 @@ export class serviceModule2 {
 - **文件: plugins.ts**
 ```typescript
 // 这个文件用于配置和注册插件
-import {injectorBuilder,Injector} from 'koa-decorator-resolve';
+import {injectorBuilder,Injector,ModuleFuncArgsType} from 'koa-decorator-resolve';
 // 定义装饰器
 type Option = {value:string}
 // Transfer是装饰器名
@@ -141,8 +141,8 @@ export const config = {
             },
             replaceProps: true, // 是否把钩子方法的返回值替换给请求返回值的body
         },
-        intercept: (func: (...args: ServiceFunctionArgs) => any, args: ServiceFunctionArgs, option?: any) => {
-            // 拦截器钩子
+        intercept: (func: (...args: ModuleFuncArgsType) => any, args: ModuleFuncArgsType, option?: Option) => {
+            // 拦截器钩子，如果多个装饰器定义了拦截器钩子，只生效第一个
             return func(...args)
         }
     }
@@ -154,7 +154,7 @@ export const config = {
 // the entry of project
 import * as Koa from 'koa';
 import * as Router from 'koa-router';
-import {routeBinder,PluginConfig} from 'koa-decorator-resolve';
+import {routeBinder} from 'koa-decorator-resolve';
 import * as serviceModules from './serviceModules';
 import {config} from './plugins'; // 上一步定义的插件配置
 const router = new Router();
@@ -190,29 +190,10 @@ export class serviceModule {
 > 首先要创建数据库连接
 - **文件: initTables.ts**
 ```typescript
-import {defineTables} from 'koa-decorator-resolve';
-import {tablesStructure,relationCallback} from './declareTables';
-export const tablesInstance = new defineTables(tablesStructure, relationCallback, {
-    useAlwaysConnection: true, // 使用长连接，短连接是每次执行方法的时候连接一次，执行完释放连接
-    useBaseConfig: false, //true:配置文件设置基础参数， false: 配置文件应设置为原始sequelize参数
-    sequelizeArgs: [ // 详细参数用法 请参照sequelize库
-      "default_db",
-      "root",
-      "root",
-      {
-        host: "localhost",
-        port: 3306,
-        dialect: "mysql",
-      },
-    ]
-});
-```
-##### 定义表模型
-> 创建数据库表模型，相关技术可以去了解sequelize库
-- **文件: declareTables.ts**
-```typescript
 // 引入sequelize的类型
 import { STRING, INTEGER, BIGINT, DATE, TIME, DATEONLY, BOOLEAN, FLOAT, DOUBLE } from 'sequelize';
+// 引入定义函数
+import {defineTables} from 'koa-decorator-resolve';
 // 以下是表模型的构造器
 export const tablesStructure = {
     ACCESS:[{
@@ -225,28 +206,49 @@ export const tablesStructure = {
         access: INTEGER,
         begin_date: DATE,
         end_date: DATE,
-    }, option]
+    }, {version: true}],
+    USER:[{
+        user_id: {
+          type: BIGINT,
+          primaryKey: true,
+        },
+        user_name: STRING(20),
+        password: STRING(20)
+    }, {version: true}],
 }
-// 表与表的关系模型可以定义在这里
-export const relationCallback = (tableModels) => {
-    const accessModel = tableModels['ACCESS'];
+// 表与表的关系模型可以定义在这里，基于sequelize的关系模型定义方式
+export const relationCallback = (tables) => {
+    tables.ACCESS.hasOne(tables.USER);
     // ...
 }
+export const {
+    Database, // 装饰器
+    connect // 连接函数（下面参数useAlwaysConnection=true的场合需要在入口手动调用这个函数来创建连接）
+} = new defineTables(tablesStructure, relationCallback, {
+    // 使用长连接，短连接是每次执行方法的时候连接一次，执行完释放连接
+    useAlwaysConnection: false, // 默认false
+    // // 是否使用基础配置文件(基础配置方式请查看文档最后的说明)
+    // useBaseConfig: false, // 默认true
+    // 直接传入sequelize参数， 数组内为实例化sequelize的参数，详细参数用法，请参照sequelize库
+    sequelizeArgs: [
+      "default_db",
+      "root",
+      "root",
+      {
+        host: "localhost",
+        port: 3306,
+        dialect: "mysql",
+      },
+    ]
+});
 ```
-##### 定义装饰器
-- **文件: declareDecorator.ts**
-```typescript
-import {tablesInstance} from './initTables';
-// 通过实例获取装饰器
-export const Database = tablesInstance.Database;
-```
+
 ##### 调用Sequelize数据库关系模型库
 > 装饰器注入DB实例
 ```typescript
 // the restful modules
-import {OrmConnectionType} from 'koa-decorator-resolve';
-import {Database} from './declareDecorator';
-import {tablesStructure} from './declareTables';
+import {OrmSequelize} from 'koa-decorator-resolve';
+import {Database,tablesStructure} from './initTables';
 export class serviceModule extends OrmSequelize<typeof tablesStructure> {
     @Database({
         tables: ['ACCESS','USER'],
@@ -259,16 +261,15 @@ export class serviceModule extends OrmSequelize<typeof tablesStructure> {
     }
 }
 ```
+
 ##### 开启事务
 > 事务中，成功commit，异常rollback
 ```typescript
 // the restful modules
-import {OrmConnectionType} from 'koa-decorator-resolve';
-import {Database} from './declareDecorator';
-import {tablesStructure} from './declareTables';
-export class serviceModule  extends OrmSequelize<typeof tablesStructure> {
+import {OrmSequelize} from 'koa-decorator-resolve';
+import {Database,tablesStructure} from './initTables';
+export class serviceModule extends OrmSequelize<typeof tablesStructure> {
     @Sqlite({
-        tables:['ACCESS'],
         useTransaction:true // 开启事务
     })
     async func(data){
@@ -277,36 +278,149 @@ export class serviceModule  extends OrmSequelize<typeof tablesStructure> {
 }
 ```
 
-#### 文件配置数据库、mysql和postgres方言配置
+#### 文件配置数据库
+
 > 通过配置文件配置数据库
+1. useBaseConfig = true 使用基本配置
+```typescript
+import {defineTables} from 'koa-decorator-resover';
+export const {Database,connect} = new defineTables(tablesStructure, relationCallback, {
+    // 是否使用基础配置文件
+    useBaseConfig: true, // 默认true
+    // 注意： sequelizeArgs参数不能添加，否则会优先于sequelizeArgs对数据库的配置
+});
 ```
-# 在工程根目录下的.env文件中配置当前连接到哪个数据库，每个数据库有单独的配置文件，支持热替换（服务运行当中替换数据库）
+
+```
+# 在工程根目录下的.env文件中配置当前连接到哪个数据库，每个数据库有单独的配置文件，短连接的时候支持热替换（服务运行当中替换数据库）
 [base] -- .env
-     | -- db.sqlite.js
      | -- db.mysql.js
      | -- db.postgres.js
 
 # 以下是.env文件的格式
 --------------------------------
-| # if you want to use sqlite
-| DB_DRIVER=sqlite
-| # if you want to use mysql
+| # 此时加载根目录下的db.mysql.js, 如果DB_DRIVER=postgres则会加载根目录下的db.postgres.js文件
 | # DB_DRIVER=mysql
-| # if you want to use postgres
-| # DB_DRIVER=postgres
 --------------------------------
 ```
+
 ```javascript
-// db.sqlite.js文件的配置方法
-module.exports = {
-    path: '/etc/test.db'
-}
 // db.mysql.js 和 db.postgres.js的配置方法
 module.exports = {
     database: 'test_db',
     username: 'test_user',
     password: 'test_pw',
     host: 'localhost',
-    port: 2001
+    port: 2001,
+    pool: { // 池化参数同样参照sequelize
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+    };
+}
+// db.sqlite.js文件的配置方法
+module.exports = {
+    path: '/etc/test.db',
+    pool: { // 池化参数同样参照sequelize
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+    };
 }
 ```
+**注意：基本配置只支持mysql、postgres、sqlite**
+
+2. useBaseConfig = false 使用标准配置
+```typescript
+import {defineTables} from 'koa-decorator-resover';
+export const {Database,connect} = new defineTables(tablesStructure, relationCallback, {
+    // 是否使用基础配置文件
+    useBaseConfig: false, // 默认true
+    // 注意： sequelizeArgs参数不能添加，否则会优先于sequelizeArgs对数据库的配置
+});
+```
+
+```
+# 在工程根目录下只需要配置db.config.js文件
+[base] -- db.config.js
+```
+
+```javascript
+// 默认标准配置，完全sequelize参数，不需要.env
+module.exports = {
+  driver: "mysql",
+  options: {
+    mysql: [
+      "default_db",
+      "root",
+      "root",
+      {
+        host: "localhost",
+        port: 3306,
+        dialect: "mysql",
+      },
+    ],
+    postgres: [
+      "default_db",
+      "postgres",
+      "password",
+      {
+        host: "localhost",
+        port: 2345,
+        dialect: "postgres",
+      },
+    ],
+    sqlite: [
+      {
+        dialect: "sqlite",
+        storage: require("path").resolve("dbfile", "sqlite.db"),
+      },
+    ],
+  },
+};
+```
+**注意：标准配置参数完全准寻sequelize参数，详细参照sequelize即可**
+
+---
+
+- ### 方法、参数一览
+  - [F]defineTables
+    - [F]connect
+    - [D]Database
+  - [C]DefineDatabase
+  - [C]OrmLoader
+  - [I]OrmBaseLoader
+  - [I]OrmBaseLoaderConstructor
+  - [F]baseTransfor
+  - [F]standardTransfor
+  - [I]Transfor
+  - [F]loadConfig
+  - [F]routeBinder
+  - [F]restfulBinder
+  - [F]servInjector
+  - [F]injectorBuilder
+  - [F]classInjectorBuilder
+  - [F]propsInjectorBuilder
+  - [F]injectBind
+  - [F]injectRemove
+  - [D]Get
+  - [D]Post
+  - [T]Combine
+  - [T]CombineAny
+  - [T]CombineColumnModel
+  - [T]TablesModelType
+  - [T]DefineModel
+  - [T]TablesStructureProps
+  - [T]TablesStructure
+  - [T]Relation
+  - [T]DatabaseOptions
+  - [T]GlobalOptions
+  - [T]DB
+  - [I]OrmSequelize
+  - [I]OrmInterface
+  - [T]RewriteModelCtor
+  - [T]RewriteModelProps
+  - [T]RewriteModelKeys
+  - [T]BaseConfigType
