@@ -62,8 +62,8 @@ export type TablesStructureProps = {
 // table构造类型
 export type TablesStructure = {
   [tableName: string]: (
-    define: DefineModel,
-    i: TablesStructureProps
+    define?: DefineModel | TablesStructureProps,
+    i?: TablesStructureProps
   ) => ModelCtor<Model<any, any>> | any[];
 };
 // table关系方法类型
@@ -131,11 +131,13 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
       "sequelize" | "transaction"
     >;
     try {
-      const options: any[] = this.options?.sequelizeArgs ||
+      const options: any[] =
+        this.options?.sequelizeArgs ||
         loadConfig({
           env: useBaseConfig ? true : false,
           transfor: useBaseConfig ? baseTransfor : standardTransfor,
-        }) || [];
+        }) ||
+        [];
       if (connectOptions?.args && connectOptions?.args.length > 0) {
         this.connectionPool[connectionKey].sequelize = new Sequelize(
           ...connectOptions?.args
@@ -293,14 +295,24 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     // 表模块构建
     const defineTablesModel = (tableName: string) => {
       let model = null;
-      let res = this.options.tablesStructure[tableName](
-        defineModel(tableName),
-        {
+      let res = null;
+      try {
+        res = this.options.tablesStructure[tableName](defineModel(tableName), {
           s: sequelize,
           t: tableName,
           o: modelOptions,
+        });
+      } catch (err1) {
+        try {
+          res = this.options.tablesStructure[tableName]({
+            s: sequelize,
+            t: tableName,
+            o: modelOptions,
+          });
+        } catch (err2) {
+          throw [err1, err2];
         }
-      );
+      }
       // 如果返回值是数组，则返回值代表参数
       if (res instanceof Array) {
         model = defineModel(tableName)(res[0], res[1]);
@@ -427,7 +439,7 @@ export const baseTransfor: Transfor<
       {
         dialect: "sqlite",
         storage: configDetail.path,
-        pool: configDetail.pool || defaultPool
+        pool: configDetail.pool || defaultPool,
       },
     ];
   } else if (driver === "mysql") {
@@ -439,7 +451,7 @@ export const baseTransfor: Transfor<
         host: configDetail.host,
         port: configDetail.port,
         dialect: "mysql",
-        pool: configDetail.pool || defaultPool
+        pool: configDetail.pool || defaultPool,
       },
     ];
   } else if (driver === "postgres") {
@@ -451,7 +463,7 @@ export const baseTransfor: Transfor<
         host: configDetail.host,
         port: configDetail.port,
         dialect: "postgres",
-        pool: configDetail.pool || defaultPool
+        pool: configDetail.pool || defaultPool,
       },
     ];
   } else {

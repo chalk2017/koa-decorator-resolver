@@ -31,7 +31,7 @@ export declare type TablesStructureProps = {
     };
 };
 export declare type TablesStructure = {
-    [tableName: string]: (define: DefineModel, i: TablesStructureProps) => ModelCtor<Model<any, any>> | any[];
+    [tableName: string]: (define?: DefineModel | TablesStructureProps, i?: TablesStructureProps) => ModelCtor<Model<any, any>> | any[];
 };
 export declare type Relation<T extends TablesStructure = TablesStructure> = (tableModels: TablesModelType<T>) => void;
 export declare type DatabaseOptions<T extends TablesStructure = TablesStructure> = {
