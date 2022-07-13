@@ -42,8 +42,7 @@
     - [调用Sequelize数据库关系模型库](#调用Sequelize数据库关系模型库)
     - [开启事务](#开启事务)
   - [文件配置数据库、mysql和postgres方言配置](#文件配置数据库、mysql和postgres方言配置)
-- [传统Restful请求](#传统Restful请求)
-  - [使用方法](#使用方法)
+- [方法、参数一览](#方法、参数一览)
 
 ### 安装
 ```
@@ -385,42 +384,61 @@ module.exports = {
 
 ---
 
-- ### 方法、参数一览
-  - [F]defineTables
-    - [F]connect
-    - [D]Database
-  - [C]DefineDatabase
-  - [C]OrmLoader
-  - [I]OrmBaseLoader
-  - [I]OrmBaseLoaderConstructor
-  - [F]baseTransfor
-  - [F]standardTransfor
-  - [I]Transfor
-  - [F]loadConfig
-  - [F]routeBinder
-  - [F]restfulBinder
-  - [F]servInjector
-  - [F]injectorBuilder
-  - [F]classInjectorBuilder
-  - [F]propsInjectorBuilder
-  - [F]injectBind
-  - [F]injectRemove
-  - [D]Get
-  - [D]Post
-  - [T]Combine
-  - [T]CombineAny
-  - [T]CombineColumnModel
-  - [T]TablesModelType
-  - [T]DefineModel
-  - [T]TablesStructureProps
-  - [T]TablesStructure
-  - [T]Relation
-  - [T]DatabaseOptions
-  - [T]GlobalOptions
-  - [T]DB
-  - [I]OrmSequelize
-  - [I]OrmInterface
-  - [T]RewriteModelCtor
-  - [T]RewriteModelProps
-  - [T]RewriteModelKeys
-  - [T]BaseConfigType
+### 方法、参数一览
+> [F]方法、[D]装饰器、[C]类、[I]接口、[T]类型
+  - service.binder
+    - [F]routeBinder - 路由绑定方法
+    - [F]restfulBinder - 传统restful绑定方法（仅支持Get/Post装饰器，即将弃用）
+  - service.injector
+    - [F]servInjector - 服务注入器，注入插件，生成controller函数和method类别
+  - decorator.builder
+    - [F]injectorBuilder - 函数装饰器构建器
+    - [F]classInjectorBuilder - 类装饰器构建器
+    - [F]propsInjectorBuilder - 参数装饰器构建器
+  - decorator.factory
+    - [F]injectBind - 装饰器参数对象绑定
+    - [F]injectRemove - 装饰器参数对象解除绑定
+  - decorator.restful
+    - [D]Get - 传统restful装饰器（配合restfulBinder使用，即将启用）
+    - [D]Post - 传统restful装饰器（配合restfulBinder使用，即将启用）
+  - database.baseDefined (orm共通)
+    - [C]DefineDatabase - 定义数据库入口类
+    - [I]OrmBaseLoader - 加载器类接口
+    - [I]OrmBaseLoaderConstructor - 加载器实例化接口
+  - database.configurator（orm共通）
+    - [F]standardTransfor - 连接参数标准转换器
+    - [I]Transfor - 连接参数转换器接口
+    - [I]StandardConfigType - 配置文件内容格式接口类型
+    - [F]loadConfig - 参数读取方法
+  - database.loader.sequelize.loader
+    - [C]OrmLoader - sequelize加载器类
+    - [T]Combine - 类型继承
+    - [T]CombineAny - 类型继承，元素转换成any类型
+    - [T]CombineColumnModel - 继承Model并注入column字段的类型
+    - [T]TablesModelType - TablesStructure推断表结构
+    - [T]DefineModel - 简化sequelize.define方法
+    - [T]TablesStructureProps - 表结构callback中的参数
+    - [T]TablesStructure - 表结构定义
+    - [T]Relation - 关系函数
+    - [T]DatabaseOptions - Database装饰器参数
+    - [T]GlobalOptions - 全局参数，defineTables的第三个参数类型
+    - [T]DB - 注入的db的类型，通过this.db.获取
+    - [I]OrmSequelize - 用于Service模块db对象注入的继承类，实现this.db.tables.???自动提示，并能提示字段
+    - [I]OrmInterface - 模块接口
+    - [T]RewriteModelCtor - 解析重写Model方法类型
+    - [T]RewriteModelProps - 重写Model方法的类型
+    - [T]RewriteModelKeys - 重写Model方法名称的list
+    - [T]BaseConfigType - 配置文件内容格式接口类型
+  - database.loader.sequelize.binder
+    - [F]defineTables - 构建表实例入口方法
+        - [F]connect - 主动连接函数
+        - [D]Database - DB注入装饰器
+    - [F]baseTransfor - sequelize用的连接参数转换器
+  - type
+    - [T]PluginConfig - 装饰器插件配置结构
+    - [T]Injector - 装饰器类型声明
+    - [T]ModuleFuncType - 模块函数类型
+    - [T]ModuleFuncArgsType - 模块函数参数
+    - [T]MethodType - restful的method
+
+    
