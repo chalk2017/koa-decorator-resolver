@@ -8,3 +8,4 @@ project.md
 .gitignore
 .npmignore
 .vscode
+package.dev.json
