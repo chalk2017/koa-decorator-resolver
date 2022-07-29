@@ -84,6 +84,7 @@ export type GlobalOptions = {
   relation?: Relation;
   useBaseConfig?: boolean;
   useAlwaysConnection?: boolean;
+  useMultiConnection?: boolean, // sqlite不支持
   useTransaction?: boolean; // 未使用
   sequelizeArgs?: any[];
 };
@@ -92,6 +93,7 @@ export const DefaultOptions = {
   useBaseConfig: true,
   useTransaction: false,
   useAlwaysConnection: false,
+  useMultiConnection: false, // sqlite不支持
   connectionKey: "global-connection",
 };
 // DB注入对象类型
@@ -163,11 +165,15 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     let connectionKey: string | symbol = DefaultOptions.connectionKey;
     // 初始化事务
     let transaction: Transaction = null;
+    // 使用多个连接实体
+    const useMultiConnection = this.options?.useMultiConnection ?? DefaultOptions.useMultiConnection;
     // 使用长连接
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
     if (!useAlwaysConnection) {
-      connectionKey = Symbol(funcName);
+      if(useMultiConnection){
+        connectionKey = Symbol(funcName);
+      }
       this.connect({ key: connectionKey });
     }
     try {
@@ -199,7 +205,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
             if (propertyKey === "sequelize") {
               return _this.connectionPool[connectionKey].sequelize;
             } else if (propertyKey === "transaction") {
-              _this.connectionPool[connectionKey].transaction;
+              return _this.connectionPool[connectionKey].transaction;
             } else if (propertyKey === "tables") {
               return tables;
             } else {
@@ -252,6 +258,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     callAfterResult: any,
     error
   ): Promise<void> {
+    console.error(error.original); // 输出详细错误信息
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
     const useTransaction = options?.useTransaction ?? false;

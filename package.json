@@ -38,11 +38,36 @@
     "dependencies": {
     },
     "devDependencies": {
+        "@babel/core": "^7.18.2",
+        "@rollup/plugin-commonjs": "^22.0.0",
+        "@rollup/plugin-node-resolve": "^13.3.0",
+        "@rollup/plugin-typescript": "^8.3.0",
+        "chalk": "^2.4.1",
+        "copy": "^0.3.2",
+        "fs-extra": "^10.0.0",
+        "lodash": "^4.17.21",
+        "moment": "^2.23.0",
+        "npm-run-all": "^4.1.5",
+        "require-all": "^3.0.0",
+        "rollup": "^2.70.0",
+        "rollup-plugin-babel": "^4.4.0",
+        "rollup-plugin-commonjs": "^10.1.0",
+        "rollup-plugin-eslint": "^7.0.0",
+        "rollup-plugin-json": "^4.0.0",
+        "rollup-plugin-node-resolve": "^5.2.0",
+        "rollup-plugin-typescript2": "^0.31.2",
+        "rollup-plugin-uglify": "^6.0.4",
+        "sqlite": "^4.0.23",
+        "sqlite3": "^5.0.2",
+        "mysql2": "^2.3.3",
+        "ts-node": "^9.0.0",
+        "tsconfig-paths": "^3.11.0"
     },
     "peerDependencies": {
         "dotenv": "10.0.0",
         "sequelize": "6.12.0-alpha.1",
         "typescript": "^4.0.5",
+        "@types/node": "^10.17.44",
         "koa": "^2.13.4",
         "koa-router": "^10.1.1"
     }
