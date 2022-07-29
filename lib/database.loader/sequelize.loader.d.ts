@@ -46,6 +46,7 @@ export declare type GlobalOptions = {
     relation?: Relation;
     useBaseConfig?: boolean;
     useAlwaysConnection?: boolean;
+    useMultiConnection?: boolean;
     useTransaction?: boolean;
     sequelizeArgs?: any[];
 };
@@ -53,6 +54,7 @@ export declare const DefaultOptions: {
     useBaseConfig: boolean;
     useTransaction: boolean;
     useAlwaysConnection: boolean;
+    useMultiConnection: boolean;
     connectionKey: string;
 };
 export declare type DB<T extends TablesStructure = TablesStructure> = {
