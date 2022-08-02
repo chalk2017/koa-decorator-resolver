@@ -17,19 +17,17 @@
     9. **简化数据库单文件配置（但仍然保留.env动态切换的方式）** [-]
     10. **整理文档** [-]
 
-- v1.3.x
+- v1.3.x（支持到node16-18）
     1. **connect异常重连** []
-    2. **sequelize与node16兼容** []
-    3. **koa,koa-router,websocket,sequelize最新版本兼容** []
-    4. **兼容性测试** []
+    2. **sequelize与node16兼容** [-]
+    3. **koa,koa-router最新版本兼容** []
+    4. **加入websocket** []
+    5. **sequelize最新版本兼容** [-]
+    6. **兼容性测试** []
+    7. **cli脚手架简易版** []
 
 - v2.0.x
-    1. **适配koa服务端框架summary的封装**
-
-- summary
-    1. **服务端框架封装**
-    2. **pm2封装**
-    3. **接入console-writer**
+    1. **拆分独立版cli脚手架（待定）**
 
 ### 待完成事项
 
