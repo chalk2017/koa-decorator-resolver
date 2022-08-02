@@ -37,7 +37,7 @@
     },
     "dependencies": {
         "dotenv": "10.0.0",
-        "sequelize": "^6.12.1"
+        "sequelize": "^6.21.3"
     },
     "devDependencies": {
         "@babel/core": "^7.18.2",

@@ -1,6 +1,6 @@
 import {
   Sequelize,
-  ModelCtor,
+  ModelStatic,
   Model,
   Transaction,
   Options,
@@ -28,13 +28,17 @@ export type CombineAny<T, K = { [key: string]: any }> = {
 // 继承Model<any, any>并注入column字段的类型
 export type CombineColumnModel<T> = CombineAny<T, Model<any, any>>;
 
+// 转换any类型
+export type TransforAny<M> = Record<keyof M, any>;
+
 // 表Models类型
 // export type TablesModelType<T extends TablesStructure = TablesStructure> =
-//   Record<keyof T, ModelCtor<Model<any, any>>>;
+//   Record<keyof T, ModelStatic<Model<any, any>>>;
 export type TablesModelType<T extends TablesStructure = TablesStructure> = {
   [P in keyof T]: ReturnType<T[P]> extends any[]
-    ? ModelCtor<CombineColumnModel<ReturnType<T[P]>[0]>>
-    : ModelCtor<Model<any, any>>;
+    ? ModelStatic<CombineColumnModel<ReturnType<T[P]>[0]>>
+    : ModelStatic<Model<any, any>>;
+    // : TransforAny<ModelStatic<any>>;
 };
 
 // 模块接口
@@ -52,7 +56,7 @@ export class OrmSequelize<T extends TablesStructure = TablesStructure>
 export type DefineModel<AT = any> = (
   model: ModelAttributes<Model<any, any>, AT>,
   option?: ModelOptions<Model<any, any>>
-) => ModelCtor<Model<any, any>>;
+) => ModelStatic<Model<any, any>>;
 // table构造器参数
 export type TablesStructureProps = {
   s: Sequelize;
@@ -64,7 +68,7 @@ export type TablesStructure = {
   [tableName: string]: (
     define?: DefineModel | TablesStructureProps,
     i?: TablesStructureProps
-  ) => ModelCtor<Model<any, any>> | any[];
+  ) => ModelStatic<Model<any, any>> | any[];
 };
 // table关系方法类型
 export type Relation<T extends TablesStructure = TablesStructure> = (
@@ -84,7 +88,7 @@ export type GlobalOptions = {
   relation?: Relation;
   useBaseConfig?: boolean;
   useAlwaysConnection?: boolean;
-  useMultiConnection?: boolean, // sqlite不支持
+  useMultiConnection?: boolean; // sqlite不支持
   useTransaction?: boolean; // 未使用
   sequelizeArgs?: any[];
 };
@@ -166,12 +170,13 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     // 初始化事务
     let transaction: Transaction = null;
     // 使用多个连接实体
-    const useMultiConnection = this.options?.useMultiConnection ?? DefaultOptions.useMultiConnection;
+    const useMultiConnection =
+      this.options?.useMultiConnection ?? DefaultOptions.useMultiConnection;
     // 使用长连接
     const useAlwaysConnection =
       this.options?.useAlwaysConnection ?? DefaultOptions.useAlwaysConnection;
     if (!useAlwaysConnection) {
-      if(useMultiConnection){
+      if (useMultiConnection) {
         connectionKey = Symbol(funcName);
       }
       this.connect({ key: connectionKey });
@@ -241,9 +246,10 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
       await callBeforeResult?.transaction?.commit();
     }
     if (!useAlwaysConnection) {
-      try {
-        await this.connectionPool[connectionKey].sequelize.close();
-      } catch (e) {}
+      // 新版本自动关闭
+      // try {
+      //   await this.connectionPool[connectionKey].sequelize.close();
+      // } catch (e) {}
     }
     this.distroyConnect(connectionKey);
   }
@@ -337,7 +343,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
         if (transition) {
           tables[tableName] = useTransaction(model, transition);
         } else {
-          tables[tableName] = model;
+          tables[tableName] = useDefaultModel(model);
         }
       });
       if (relation) {
@@ -362,13 +368,11 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
   }
 }
 
-// 使用事务
-export type RewriteModelCtor<T extends keyof ModelCtor<Model<any, any>>> = Pick<
-  ModelCtor<Model<any, any>>,
-  T
->;
+// 重写model
+export type RewriteModelStatic<T extends keyof ModelStatic<Model<any, any>>> =
+  Pick<ModelStatic<Model<any, any>>, T>;
 // 重写属性
-export type RewriteModelProps = RewriteModelCtor<
+export type RewriteModelProps = RewriteModelStatic<
   | "create"
   | "update"
   | "destroy"
@@ -380,34 +384,53 @@ export type RewriteModelProps = RewriteModelCtor<
   | "sum"
   | "count"
 >;
-export function injectTransaction(
-  model: ModelCtor<Model<any, any>>,
-  transaction: Transaction
+export function modelPropsInject(
+  model: ModelStatic<Model<any, any>>,
+  props: any = {}
 ): RewriteModelProps {
   const rewrite = {
     // 重写方法
-    create: async (v, o) => await model.create(v, { transaction, ...o }),
-    update: async (v, o) => await model.update(v, { transaction, ...o }),
-    destroy: async (o) => await model.destroy({ transaction, ...o }),
-    bulkCreate: async (vs, o) =>
-      await model.bulkCreate(vs, { transaction, ...o }),
-    findAll: async (o) => await model.findAll({ transaction, ...o }),
-    findOne: async (o) => await model.findOne({ transaction, ...o }),
-    max: async (f, o) => await model.max(f, { transaction, ...o }),
-    min: async (f, o) => await model.min(f, { transaction, ...o }),
-    sum: async (f, o) => await model.sum(f, { transaction, ...o }),
-    count: async (o) => await model.count({ transaction, ...o }),
+    create: async (v, o) => await model.create(v, { ...props, ...o }),
+    update: async (v, o) => await model.update(v, { ...props, ...o }),
+    destroy: async (o) => await model.destroy({ ...props, ...o }),
+    bulkCreate: async (vs, o) => await model.bulkCreate(vs, { ...props, ...o }),
+    findAll: async (o) => await model.findAll({ ...props, ...o }),
+    findOne: async (o) => await model.findOne({ ...props, ...o }),
+    max: async (f, o) => await model.max(f, { ...props, ...o }),
+    min: async (f, o) => await model.min(f, { ...props, ...o }),
+    sum: async (f, o) => await model.sum(f, { ...props, ...o }),
+    count: async (o) => await model.count({ ...props, ...o }),
   };
   return rewrite as RewriteModelProps;
+}
+export function injectTransaction(
+  model: ModelStatic<Model<any, any>>,
+  transaction: Transaction
+) {
+  return modelPropsInject(model, { transaction });
 }
 // 重写属性枚举
 export type RewriteModelKeys = keyof RewriteModelProps;
 // 使用事务
 export function useTransaction(
-  model: ModelCtor<Model<any, any>>,
+  model: ModelStatic<Model<any, any>>,
   transaction: Transaction
-): RewriteModelProps & ModelCtor<Model<any, any>> {
+): RewriteModelProps & ModelStatic<Model<any, any>> {
   const rewrite = injectTransaction(model, transaction);
+  return new Proxy(model, {
+    get(target, propertyKey, receiver) {
+      if (rewrite[propertyKey]) {
+        return rewrite[propertyKey];
+      } else {
+        return Reflect.get(target, propertyKey, receiver);
+      }
+    },
+  });
+}
+export function useDefaultModel(
+  model: ModelStatic<Model<any, any>>
+): RewriteModelProps & ModelStatic<Model<any, any>> {
+  const rewrite = modelPropsInject(model);
   return new Proxy(model, {
     get(target, propertyKey, receiver) {
       if (rewrite[propertyKey]) {
