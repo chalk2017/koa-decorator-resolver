@@ -1,4 +1,4 @@
-import { Sequelize, ModelCtor, Model, Transaction, PoolOptions, ModelAttributes, ModelOptions } from "sequelize";
+import { Sequelize, ModelStatic, Model, Transaction, PoolOptions, ModelAttributes, ModelOptions } from "sequelize";
 import { Transfor } from "../database/configurator";
 import { OrmBaseLoader, OrmInjectTargetType } from "../database/baseDefined";
 export declare type ExtractResult<T, U> = T extends keyof U ? U[T] : never;
@@ -13,8 +13,9 @@ export declare type CombineAny<T, K = {
     [P in keyof T]: any;
 } & K;
 export declare type CombineColumnModel<T> = CombineAny<T, Model<any, any>>;
+export declare type TransforAny<M> = Record<keyof M, any>;
 export declare type TablesModelType<T extends TablesStructure = TablesStructure> = {
-    [P in keyof T]: ReturnType<T[P]> extends any[] ? ModelCtor<CombineColumnModel<ReturnType<T[P]>[0]>> : ModelCtor<Model<any, any>>;
+    [P in keyof T]: ReturnType<T[P]> extends any[] ? ModelStatic<CombineColumnModel<ReturnType<T[P]>[0]>> : ModelStatic<Model<any, any>>;
 };
 export interface OrmInterface<T extends TablesStructure = TablesStructure> extends OrmInjectTargetType {
     db: DB<T>;
@@ -22,7 +23,7 @@ export interface OrmInterface<T extends TablesStructure = TablesStructure> exten
 export declare class OrmSequelize<T extends TablesStructure = TablesStructure> implements OrmInterface {
     db: DB<T>;
 }
-export declare type DefineModel<AT = any> = (model: ModelAttributes<Model<any, any>, AT>, option?: ModelOptions<Model<any, any>>) => ModelCtor<Model<any, any>>;
+export declare type DefineModel<AT = any> = (model: ModelAttributes<Model<any, any>, AT>, option?: ModelOptions<Model<any, any>>) => ModelStatic<Model<any, any>>;
 export declare type TablesStructureProps = {
     s: Sequelize;
     t: string;
@@ -31,7 +32,7 @@ export declare type TablesStructureProps = {
     };
 };
 export declare type TablesStructure = {
-    [tableName: string]: (define?: DefineModel | TablesStructureProps, i?: TablesStructureProps) => ModelCtor<Model<any, any>> | any[];
+    [tableName: string]: (define?: DefineModel | TablesStructureProps, i?: TablesStructureProps) => ModelStatic<Model<any, any>> | any[];
 };
 export declare type Relation<T extends TablesStructure = TablesStructure> = (tableModels: TablesModelType<T>) => void;
 export declare type DatabaseOptions<T extends TablesStructure = TablesStructure> = {
@@ -86,11 +87,13 @@ export declare class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     } | undefined, callAfterResult: any, error: any): Promise<void>;
     declareTables(sequelize: Sequelize, transition: Transaction, cacheTabs: string[], relation: Relation): TablesModelType;
 }
-export declare type RewriteModelCtor<T extends keyof ModelCtor<Model<any, any>>> = Pick<ModelCtor<Model<any, any>>, T>;
-export declare type RewriteModelProps = RewriteModelCtor<"create" | "update" | "destroy" | "bulkCreate" | "findAll" | "findOne" | "max" | "min" | "sum" | "count">;
-export declare function injectTransaction(model: ModelCtor<Model<any, any>>, transaction: Transaction): RewriteModelProps;
+export declare type RewriteModelStatic<T extends keyof ModelStatic<Model<any, any>>> = Pick<ModelStatic<Model<any, any>>, T>;
+export declare type RewriteModelProps = RewriteModelStatic<"create" | "update" | "destroy" | "bulkCreate" | "findAll" | "findOne" | "max" | "min" | "sum" | "count">;
+export declare function modelPropsInject(model: ModelStatic<Model<any, any>>, props?: any): RewriteModelProps;
+export declare function injectTransaction(model: ModelStatic<Model<any, any>>, transaction: Transaction): RewriteModelProps;
 export declare type RewriteModelKeys = keyof RewriteModelProps;
-export declare function useTransaction(model: ModelCtor<Model<any, any>>, transaction: Transaction): RewriteModelProps & ModelCtor<Model<any, any>>;
+export declare function useTransaction(model: ModelStatic<Model<any, any>>, transaction: Transaction): RewriteModelProps & ModelStatic<Model<any, any>>;
+export declare function useDefaultModel(model: ModelStatic<Model<any, any>>): RewriteModelProps & ModelStatic<Model<any, any>>;
 /** @deprecated use BaseConfigType */
 export declare type BaseConfigType = {
     database?: string;

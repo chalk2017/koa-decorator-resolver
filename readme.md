@@ -2,29 +2,58 @@
 
 > **这是一个可以在koa框架中使用装饰器的解决方案**
 
-[![license:MIT](https://img.shields.io/badge/License-MIT-green)](https://www.npmjs.com/package/koa-decorator-resolver) ![version:1.2.x](https://img.shields.io/badge/version-1.2.x-blue)
+[![license:MIT](https://img.shields.io/badge/License-MIT-green)](https://www.npmjs.com/package/koa-decorator-resolver) ![version:1.3.x](https://img.shields.io/badge/version-1.3.x-blue)
 
 ------------
 
-- ### 支持的依赖版本 
-
-[![node:^14.x.x](https://img.shields.io/badge/node-14.x.x-orange)](https://nodejs.org/en/)
-[![koa:^2.x.x](https://img.shields.io/badge/koa-2.x.x-orange)](https://koa.bootcss.com/)
-[![koa-router:^2.x.x](https://img.shields.io/badge/koa--router-7.x.x-orange)](https://wohugb.gitbooks.io/koajs/content/route/koa-router.html)
-[![sequelize:^6.x.x](https://img.shields.io/badge/sequelize-6.x.x-orange)](https://www.sequelize.com.cn/)
-
 ```json
-// 测试基于以下版本
+// 测试基于以下版本，取自2022/8/2最新版本
 {
-    "sequelize": "6.12.0-alpha.1",
-    "koa": "^2.6.2",
-    "koa-router": "^7.4.0",
-    "node": "^14.19.1",
-    "sqlite": "^4.0.23",
-    "sqlite3": "^5.0.2",
+  "dependencies": {
+    "@types/jest": "^27.4.1",
+    "@types/request": "^2.48.8",
+    "chalk": "^2.4.1",
+    "console-writer": "^1.0.0-beta.1.1",
+    "crypto-js": "^4.1.1",
+    "exceljs": "^4.3.0",
+    "fs-extra": "^10.0.0",
+    "jest": "^27.5.1",
+    "jest-fast-config": "^1.0.3",
+    "jest-html-reporter": "^3.4.2",
+    "koa": "^2.13.4",
+    "koa-body": "^5.0.0",
+    "koa-bodyparser": "^4.3.0",
+    "koa-decorator-resolver": "^1.2.5",
+    "koa-router": "^12.0.0",
+    "koa-send": "^5.0.1",
+    "koa-websocket": "^7.0.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.23.0",
     "mysql2": "^2.3.3",
-    "pg-hstore": "^2.3.4",
-    "pg" : "^7.18.2"
+    "request": "^2.88.2",
+    "require-all": "^3.0.0",
+    "sequelize": "^6.21.3",
+    "sqlite": "^4.0.23",
+    "sqlite3": "^5.0.11",
+    "ts-jest": "^27.1.4",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.0.0",
+    "typescript": "^4.7.4",
+    "uuid": "^8.3.2",
+    "xlsx": "^0.17.4"
+  },
+  "devDependencies": {
+    "@types/node": "^10.17.44",
+    "chai": "^4.3.4",
+    "copy": "^0.3.2",
+    "dotenv": "^10.0.0",
+    "dotenv-cli": "^6.0.0",
+    "mocha": "^9.1.3",
+    "nodemon": "^2.0.15",
+    "npm-run-all": "^4.1.5",
+    "nyc": "^15.1.0",
+    "ts-mocha": "^8.0.0"
+  }
 }
 ```
 
