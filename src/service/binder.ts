@@ -42,7 +42,7 @@ export function routeBinder(
       const [method, controller, url] = servInjector(
         moduleObj,
         subName,
-        config
+        config || {}
       );
       if (url) {
         router[method](url, controller);

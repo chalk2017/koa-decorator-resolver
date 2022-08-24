@@ -1,5 +1,12 @@
 // 自动注入
-import { PluginConfig, MethodType, TargetType, ControllerType, UrlType } from "../type";
+import {
+  PluginConfig,
+  MethodType,
+  TargetType,
+  ControllerType,
+  UrlType,
+} from "../type";
+import { InjectorType } from "../decorator/factory";
 /**
  * service方法参数：
  * arg1：页面传输参数
@@ -13,102 +20,79 @@ export function servInjector(
 ): [MethodType, ControllerType, UrlType] {
   // 默认post
   let method: MethodType = "post";
-  for (const injectName in config) {
-    // 插件有指定method，优先第一个插件的请求
-    if (config[injectName].method) {
-      // 插件是绑定在当前的函数上
-      if (
-        target?.$inject &&
-        target?.$inject[injectName] &&
-        target?.$inject[injectName][funcName]
-      ) {
-        // 指定插件的method
-        method = config[injectName].method;
-        break;
+  // 获取装饰器列表
+  const injectors: Array<InjectorType> = Reflect.getMetadata(
+    "inject::plugins",
+    target,
+    funcName
+  );
+  // 并入插件
+  let pluginMethod: string | undefined = undefined;
+  let pluginIntercept: { intercept: any; option: any } | undefined = undefined;
+  const injectPlugins: Array<InjectorType & { plugin: PluginConfig[string] }> =
+    injectors.map((item) => {
+      const plugin = config[item.injectName];
+      if (pluginMethod === undefined) {
+        pluginMethod = plugin.method;
       }
-    }
-  }
-  // 获取插件中拦截器
-  let intercept = null;
-  let interceptOption = null;
-  // 只截取第一个拦截器
-  for (const injectName in config) {
-    if (config[injectName].intercept) {
-      // 插件是绑定在当前的函数上
-      if (
-        target?.$inject &&
-        target?.$inject[injectName] &&
-        target?.$inject[injectName][funcName]
-      ) {
-        intercept = config[injectName].intercept;
-        interceptOption = target?.$inject[injectName][funcName]?.option;
-        break;
+      if (pluginIntercept === undefined && plugin.intercept) {
+        pluginIntercept = {
+          intercept: plugin.intercept,
+          option: item.option,
+        };
       }
-    }
-  }
+      return {
+        ...item,
+        plugin,
+      };
+    });
+
   // 定义控制器
   const controller = async (ctx) => {
     const fullRes = {} as any; // 插件返回值
     let data = null; // 装饰的方法的第一个默认参数
     // 装饰器前拦截器
-    for (const injectName in config) {
-      // 只处理注解的对象
-      if (!config[injectName].before) continue;
-      if (
-        target?.$inject &&
-        target?.$inject[injectName] &&
-        target?.$inject[injectName][funcName]
-      ) {
-        const pluginFunction = config[injectName].before.plugin;
-        const pluginRes = await pluginFunction(
-          ctx,
-          target?.$inject[injectName][funcName]?.option
-        );
-        fullRes[injectName] = pluginRes;
-        // 替换第一个参数(如果多个装饰器replaceProps=true,data只取最后一个装饰器的返回值)
-        if (config[injectName].before.replaceProps) {
-          data = pluginRes;
-        }
+    for (const injector of injectPlugins) {
+      if (!injector.plugin.before) continue;
+      const pluginRes = await injector.plugin.before.plugin(
+        ctx,
+        injector.option
+      );
+      fullRes[injector.injectName] = pluginRes;
+      // 替换第一个参数(如果多个装饰器replaceProps=true,data只取最后一个装饰器的返回值)
+      if (injector.plugin.before.replaceProps) {
+        data = pluginRes;
       }
     }
+
     fullRes.data = ctx.request.body;
     if (data === null) {
       data = fullRes.data;
     }
     // 中间拦截器
     let res = null;
-    if (intercept) {
-      res = await intercept(
+    if (pluginIntercept) {
+      res = await pluginIntercept.intercept(
         target[funcName],
         [data, fullRes, ctx],
-        interceptOption
+        pluginIntercept.option
       );
     } else {
       res = await target[funcName](data, fullRes, ctx);
     }
     // 装饰器后拦截器
     let hasAfterInjector = false;
-    for (const injectName in config) {
-      // 只处理注解的对象
-      if (!config[injectName].after) continue;
-      const pluginFunction = config[injectName].after.plugin;
-      if (
-        target?.$inject &&
-        target?.$inject[injectName] &&
-        target?.$inject[injectName][funcName]
-      ) {
-        const pluginRes = await pluginFunction(
-          res,
-          ctx,
-          target?.$inject[injectName][funcName]?.option
-        );
-        fullRes[injectName] = pluginRes;
-        hasAfterInjector = true; // 有后拦截器的情况
-        // 替换第一个参数
-        if (config[injectName].after.replaceProps) {
-          // 如果有后拦截器，用后拦截器的结构填充body
-          ctx.body = pluginRes;
-        }
+    for (const injector of injectPlugins) {
+      if (!injector.plugin.after) continue;
+      const pluginRes = await injector.plugin.after.plugin(
+        ctx,
+        injector.option
+      );
+      fullRes[injector.injectName] = pluginRes;
+      hasAfterInjector = true; // 有后拦截器的情况
+      if (injector.plugin.after.replaceProps) {
+        // 如果有后拦截器，用后拦截器的结构填充body
+        ctx.body = pluginRes;
       }
     }
     // 如果没有后拦截器，用body填充res

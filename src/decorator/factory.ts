@@ -5,40 +5,57 @@ import { TargetType } from "../type";
 export type OptionsType = {
   [injectName: string]: any;
 };
+export type InjectorType = {
+  injectName: string;
+  option: any;
+};
 // 装饰器绑定属性
 export function injectBind(
   target: TargetType,
   funcName: string,
   options: OptionsType
 ): void {
-  if (!target.$inject) {
-    target.$inject = {};
-  }
+  let injectors: Array<InjectorType> = Reflect.getMetadata(
+    "inject::plugins",
+    target,
+    funcName
+  );
   for (const injectName in options) {
-    if (target.$inject[injectName]) {
-      // 绑定函数，多装饰器绑定
-      target.$inject[injectName][funcName] = options[injectName];
+    if (injectors && injectors instanceof Array) {
+      const injector = injectors.filter((item) => {
+        return item.injectName === injectName;
+      });
+      if (injector.length > 0) {
+        injector[0].option = options[injectName];
+      } else {
+        injectors.push({
+          injectName,
+          option: options[injectName],
+        });
+      }
     } else {
-      target.$inject[injectName] = {
-        [funcName]: options[injectName],
-      };
+      injectors = [{ injectName, option: options[injectName] }];
     }
+    Reflect.defineMetadata("inject::plugins", injectors, target, funcName);
   }
 }
 // 装饰器解除属性绑定
 export function injectRemove(
   target: TargetType,
   injectName: string,
-  funcName?: string
+  funcName: string
 ): void {
-  if (!target.$inject) {
-    target.$inject = {};
-  }
-  if (target.$inject[injectName]) {
-    if (funcName) {
-      delete target.$inject[injectName][funcName];
-    } else {
-      delete target.$inject[injectName];
-    }
-  }
+  const injectors: Array<InjectorType> = Reflect.getMetadata(
+    "inject::plugins",
+    target,
+    funcName
+  );
+  Reflect.defineMetadata(
+    "inject::plugins",
+    injectors.filter((item) => {
+      item.injectName !== injectName;
+    }),
+    target,
+    funcName
+  );
 }
