@@ -2,7 +2,7 @@
  * 插件 factory
  */
 import { TargetType } from "../type";
-import * as Reflect from "reflect-metadata";
+
 export type OptionsType = {
   [injectName: string]: any;
 };
