@@ -31,7 +31,7 @@ export function injectorBuilder(
       propertyKey,
       { configurable, enumerable, value, writable }
     ) => {
-      onDecorate(target, propertyKey, option);
+      onDecorate(target, propertyKey, option as OptionType);
       const func = async (...args) => {
         const _args = await onBefore(...args);
         const _res = await value.apply(target, _args);

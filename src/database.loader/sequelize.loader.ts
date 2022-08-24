@@ -168,7 +168,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
     // 初始化key
     let connectionKey: string | symbol = DefaultOptions.connectionKey;
     // 初始化事务
-    let transaction: Transaction = null;
+    let transaction: Transaction = null as any;
     // 使用多个连接实体
     const useMultiConnection =
       this.options?.useMultiConnection ?? DefaultOptions.useMultiConnection;
@@ -194,13 +194,13 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
       if (!useAlwaysConnection) {
         this.connectionPool[connectionKey].transaction = transaction;
       } else {
-        this.connectionPool[connectionKey].transaction = null;
+        this.connectionPool[connectionKey].transaction = null as any;
       }
       const tables = this.declareTables(
         this.connectionPool[connectionKey].sequelize,
         transaction,
         <string[]>options.tables,
-        options.relation
+        options.relation as any
       );
       // target.db = this.db;
       target.db = new Proxy(
@@ -280,7 +280,7 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
         }
       } catch (e) {}
     }
-    this.distroyConnect(callBeforeResult?.connectionKey);
+    this.distroyConnect(callBeforeResult?.connectionKey as any);
   }
 
   // 定义表
@@ -307,17 +307,17 @@ export class OrmLoader implements OrmBaseLoader<DatabaseOptions> {
         });
     // 表模块构建
     const defineTablesModel = (tableName: string) => {
-      let model = null;
-      let res = null;
+      let model: ModelStatic<Model<any, any>> = null as any;
+      let res: ReturnType<TablesStructure[string]> = null as any;
       try {
-        res = this.options.tablesStructure[tableName](defineModel(tableName), {
+        res = (this.options.tablesStructure as TablesStructure)[tableName](defineModel(tableName), {
           s: sequelize,
           t: tableName,
           o: modelOptions,
         });
       } catch (err1) {
         try {
-          res = this.options.tablesStructure[tableName]({
+          res = (this.options.tablesStructure as TablesStructure)[tableName]({
             s: sequelize,
             t: tableName,
             o: modelOptions,
@@ -463,7 +463,7 @@ export const baseTransfor: Transfor<
     acquire: 30000,
     idle: 10000,
   };
-  const driver = env.DB_DRIVER;
+  const driver = env?.DB_DRIVER;
   if (driver === "sqlite") {
     return [
       {
