@@ -8,11 +8,12 @@
         "clear": "rm -rf types lib esm cjs",
         "build:dev": "set NODE_ENV=production && tsc -d -p ./tsconfig.build.json && rollup -c rollup.config.js",
         "build:ts": "set NODE_ENV=production && tsc -d -p ./tsconfig.build.json",
-        "build:rollup": "set NODE_ENV=production && rollup -c rollup.config.js"
+        "build:rollup": "set NODE_ENV=production && rollup -c rollup.config.js",
+        "test:serve": "ts-node -r tsconfig-paths/register ./test/index.ts --files" 
     },
     "author": "chalk2017",
     "engines": {
-        "node": ">=14 <16"
+        "node": ">=14 <18"
     },
     "keywords": [
         "koa",

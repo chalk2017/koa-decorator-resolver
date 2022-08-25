@@ -1,5 +1,6 @@
 import { Database, tablesStructure } from "./database";
 import { OrmSequelize, TablesModelType } from "../";
+import { Test, Verify } from './plugins';
 const relation = (tables: TablesModelType<typeof tablesStructure>) => {
   tables.USER.hasOne(tables.USER);
 };
@@ -15,6 +16,8 @@ export class DemoServiceAlpha extends OrmSequelize<typeof tablesStructure> {
 }
 
 export class DemoServiceBeta {
+  @Test()
+  @Verify()
   async test1() {}
 
   async test2() {}

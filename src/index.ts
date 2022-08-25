@@ -1,3 +1,4 @@
+import "reflect-metadata";
 export * from './type';
 export * from './service/binder';
 export * from './service/injector';

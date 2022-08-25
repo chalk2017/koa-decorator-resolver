@@ -6,17 +6,20 @@
         "sourceMap": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "rootDir": "test",
+        "rootDir": ".",
         "baseUrl": ".",
         "typeRoots": [
-            "types"
+            "types",
+            "reflect-metadata"
         ],
         "types": [
-            "node"
+            "node",
+            "reflect-metadata"
         ],
     },
     "include": [
-        "test/**/*"
+        "test/**/*",
+        "reflect-metadata"
     ],
     "exclude": [
         "node_modules"
