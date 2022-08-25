@@ -39,7 +39,7 @@ export function injectorBuilder(
         return res;
       };
       injectBind(target, propertyKey, {
-        [injectName]: { option }, // target['$inject'][injectName][propertyKey] -> { option }
+        [injectName]: { option },
       });
       return { configurable, enumerable, value: func, writable };
     };

@@ -37,10 +37,10 @@ export function routeBinder(
       serviceModule.prototype
     ).filter((f) => InUsingProperty.every((p) => f.toLowerCase() !== p));
     // 实例化模块
-    const moduleObj = Reflect.construct(serviceModule, []);
+    const moduleInstance = Reflect.construct(serviceModule, []);
     for (let subName of moduleFuncs) {
       const [method, controller, url] = servInjector(
-        moduleObj,
+        moduleInstance,
         subName,
         config || {}
       );

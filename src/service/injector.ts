@@ -25,7 +25,7 @@ export function servInjector(
     "inject::plugins",
     target,
     funcName
-  );
+  ) || [];
   // 并入插件
   let pluginMethod: string | undefined = undefined;
   let pluginIntercept: { intercept: any; option: any } | undefined = undefined;
